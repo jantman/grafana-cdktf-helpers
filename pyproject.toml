@@ -1,0 +1,23 @@
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "grafana-cdktf-helpers"
+version = "0.1.0"
+description = "Shared CDKTF helper classes for Grafana alert rules, dashboards, and monitoring"
+requires-python = ">=3.10"
+dependencies = [
+    "cdktf>=0.20.0",
+]
+
+[project.optional-dependencies]
+test = [
+    "pytest",
+]
+
+[tool.setuptools.packages.find]
+include = ["grafana_cdktf_helpers*"]
+
+[tool.setuptools.package-data]
+grafana_cdktf_helpers = ["dashboards/*.json"]
