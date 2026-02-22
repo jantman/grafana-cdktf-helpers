@@ -34,7 +34,7 @@
             "collapsed": false,
             "datasource": {
                 "type": "prometheus",
-                "uid": "k2I1C4hVz"
+                "uid": "${prom_uid}"
             },
             "gridPos": {
                 "h": 1,
@@ -48,7 +48,7 @@
                 {
                     "datasource": {
                         "type": "prometheus",
-                        "uid": "k2I1C4hVz"
+                        "uid": "${prom_uid}"
                     },
                     "refId": "A"
                 }
@@ -59,7 +59,7 @@
         {
             "datasource": {
                 "type": "prometheus",
-                "uid": "k2I1C4hVz"
+                "uid": "${prom_uid}"
             },
             "description": "",
             "fieldConfig": {
@@ -145,7 +145,7 @@
                 {
                     "datasource": {
                         "type": "prometheus",
-                        "uid": "k2I1C4hVz"
+                        "uid": "${prom_uid}"
                     },
                     "editorMode": "code",
                     "expr": "sum(systemd_unit_state) by (state)",
@@ -164,7 +164,7 @@
         {
             "datasource": {
                 "type": "prometheus",
-                "uid": "k2I1C4hVz"
+                "uid": "${prom_uid}"
             },
             "description": "",
             "fieldConfig": {
@@ -244,7 +244,7 @@
                 {
                     "datasource": {
                         "type": "prometheus",
-                        "uid": "k2I1C4hVz"
+                        "uid": "${prom_uid}"
                     },
                     "editorMode": "code",
                     "exemplar": false,
@@ -267,7 +267,7 @@
             "collapsed": false,
             "datasource": {
                 "type": "prometheus",
-                "uid": "k2I1C4hVz"
+                "uid": "${prom_uid}"
             },
             "gridPos": {
                 "h": 1,
@@ -281,7 +281,7 @@
                 {
                     "datasource": {
                         "type": "prometheus",
-                        "uid": "k2I1C4hVz"
+                        "uid": "${prom_uid}"
                     },
                     "refId": "A"
                 }
@@ -292,7 +292,7 @@
         {
             "datasource": {
                 "type": "prometheus",
-                "uid": "k2I1C4hVz"
+                "uid": "${prom_uid}"
             },
             "fieldConfig": {
                 "defaults": {
@@ -359,7 +359,7 @@
                 {
                     "datasource": {
                         "type": "prometheus",
-                        "uid": "k2I1C4hVz"
+                        "uid": "${prom_uid}"
                     },
                     "editorMode": "code",
                     "expr": "sum(systemd_unit_state{instance=~\"$Node:.*\", state=\"activating\"})",
@@ -378,7 +378,7 @@
         {
             "datasource": {
                 "type": "prometheus",
-                "uid": "k2I1C4hVz"
+                "uid": "${prom_uid}"
             },
             "fieldConfig": {
                 "defaults": {
@@ -442,7 +442,7 @@
                 {
                     "datasource": {
                         "type": "prometheus",
-                        "uid": "k2I1C4hVz"
+                        "uid": "${prom_uid}"
                     },
                     "editorMode": "code",
                     "expr": "sum(systemd_unit_state{instance=~\"$Node:.*\", state=\"active\"})",
@@ -461,7 +461,7 @@
         {
             "datasource": {
                 "type": "prometheus",
-                "uid": "k2I1C4hVz"
+                "uid": "${prom_uid}"
             },
             "fieldConfig": {
                 "defaults": {
@@ -526,7 +526,7 @@
                 {
                     "datasource": {
                         "type": "prometheus",
-                        "uid": "k2I1C4hVz"
+                        "uid": "${prom_uid}"
                     },
                     "editorMode": "code",
                     "expr": "sum(systemd_unit_state{instance=~\"$Node:.*\", state=\"failed\"})",
@@ -545,7 +545,7 @@
         {
             "datasource": {
                 "type": "prometheus",
-                "uid": "k2I1C4hVz"
+                "uid": "${prom_uid}"
             },
             "fieldConfig": {
                 "defaults": {
@@ -609,7 +609,7 @@
                 {
                     "datasource": {
                         "type": "prometheus",
-                        "uid": "k2I1C4hVz"
+                        "uid": "${prom_uid}"
                     },
                     "editorMode": "code",
                     "expr": "sum(systemd_unit_state{instance=~\"$Node:.*\", state=\"inactive\"})",
@@ -628,7 +628,7 @@
         {
             "datasource": {
                 "type": "prometheus",
-                "uid": "k2I1C4hVz"
+                "uid": "${prom_uid}"
             },
             "fieldConfig": {
                 "defaults": {
@@ -704,7 +704,7 @@
                 {
                     "datasource": {
                         "type": "prometheus",
-                        "uid": "k2I1C4hVz"
+                        "uid": "${prom_uid}"
                     },
                     "editorMode": "code",
                     "expr": "sum(systemd_unit_state{instance=~\"$Node:.*\",state=\"failed\"}) by (name) > 0",
@@ -722,7 +722,7 @@
         {
             "datasource": {
                 "type": "prometheus",
-                "uid": "k2I1C4hVz"
+                "uid": "${prom_uid}"
             },
             "fieldConfig": {
                 "defaults": {
@@ -797,7 +797,7 @@
                 {
                     "datasource": {
                         "type": "prometheus",
-                        "uid": "k2I1C4hVz"
+                        "uid": "${prom_uid}"
                     },
                     "editorMode": "code",
                     "expr": "rate(systemd_process_cpu_seconds_total{instance=~\"$Node:.*\"}[1m])",
@@ -815,7 +815,7 @@
         {
             "datasource": {
                 "type": "prometheus",
-                "uid": "k2I1C4hVz"
+                "uid": "${prom_uid}"
             },
             "description": "",
             "fieldConfig": {
@@ -891,7 +891,7 @@
                 {
                     "datasource": {
                         "type": "prometheus",
-                        "uid": "k2I1C4hVz"
+                        "uid": "${prom_uid}"
                     },
                     "editorMode": "code",
                     "expr": "systemd_process_resident_memory_bytes{instance=~\"$Node:.*\"}",
@@ -909,7 +909,7 @@
         {
             "datasource": {
                 "type": "prometheus",
-                "uid": "k2I1C4hVz"
+                "uid": "${prom_uid}"
             },
             "fieldConfig": {
                 "defaults": {
@@ -984,7 +984,7 @@
                 {
                     "datasource": {
                         "type": "prometheus",
-                        "uid": "k2I1C4hVz"
+                        "uid": "${prom_uid}"
                     },
                     "editorMode": "code",
                     "expr": "systemd_process_max_fds{instance=~\"$Node:.*\"}",
@@ -1002,7 +1002,7 @@
         {
             "datasource": {
                 "type": "prometheus",
-                "uid": "k2I1C4hVz"
+                "uid": "${prom_uid}"
             },
             "description": "",
             "fieldConfig": {
@@ -1078,7 +1078,7 @@
                 {
                     "datasource": {
                         "type": "prometheus",
-                        "uid": "k2I1C4hVz"
+                        "uid": "${prom_uid}"
                     },
                     "editorMode": "code",
                     "expr": "systemd_process_virtual_memory_bytes{instance=~\"$Node:.*\"}",
@@ -1096,7 +1096,7 @@
         {
             "datasource": {
                 "type": "prometheus",
-                "uid": "k2I1C4hVz"
+                "uid": "${prom_uid}"
             },
             "description": "",
             "fieldConfig": {
@@ -1172,7 +1172,7 @@
                 {
                     "datasource": {
                         "type": "prometheus",
-                        "uid": "k2I1C4hVz"
+                        "uid": "${prom_uid}"
                     },
                     "editorMode": "code",
                     "expr": "systemd_process_virtual_memory_max_bytes{instance=~\"$Node:.*\"}",
@@ -1190,7 +1190,7 @@
         {
             "datasource": {
                 "type": "prometheus",
-                "uid": "k2I1C4hVz"
+                "uid": "${prom_uid}"
             },
             "description": "",
             "fieldConfig": {
@@ -1266,7 +1266,7 @@
                 {
                     "datasource": {
                         "type": "prometheus",
-                        "uid": "k2I1C4hVz"
+                        "uid": "${prom_uid}"
                     },
                     "editorMode": "code",
                     "expr": "rate(systemd_socket_accepted_connections_total{instance=~\"$Node:.*\"}[1m])",
@@ -1280,7 +1280,7 @@
                 {
                     "datasource": {
                         "type": "prometheus",
-                        "uid": "k2I1C4hVz"
+                        "uid": "${prom_uid}"
                     },
                     "editorMode": "code",
                     "expr": "systemd_socket_refused_connections_total{instance=~\"$Node:.*\"}",
@@ -1296,7 +1296,7 @@
         {
             "datasource": {
                 "type": "prometheus",
-                "uid": "k2I1C4hVz"
+                "uid": "${prom_uid}"
             },
             "description": "",
             "fieldConfig": {
@@ -1372,7 +1372,7 @@
                 {
                     "datasource": {
                         "type": "prometheus",
-                        "uid": "k2I1C4hVz"
+                        "uid": "${prom_uid}"
                     },
                     "editorMode": "code",
                     "expr": "systemd_socket_current_connections{instance=~\"$Node:.*\"}",
@@ -1390,7 +1390,7 @@
         {
             "datasource": {
                 "type": "prometheus",
-                "uid": "k2I1C4hVz"
+                "uid": "${prom_uid}"
             },
             "description": "",
             "fieldConfig": {
@@ -1466,7 +1466,7 @@
                 {
                     "datasource": {
                         "type": "prometheus",
-                        "uid": "k2I1C4hVz"
+                        "uid": "${prom_uid}"
                     },
                     "editorMode": "code",
                     "expr": "systemd_unit_tasks_current{instance=~\"$Node:.*\"}",
@@ -1493,7 +1493,7 @@
                 },
                 "datasource": {
                     "type": "prometheus",
-                    "uid": "k2I1C4hVz"
+                    "uid": "${prom_uid}"
                 },
                 "definition": "label_values(systemd_exporter_build_info, instance)",
                 "hide": 0,

@@ -47,12 +47,16 @@ class Hosts:
         dashboard_dir: Optional[str] = None,
         dashboard_replacements: Optional[Dict[str, str]] = None,
     ):
+        replacements = {'${prom_uid}': stack.prom.uid}
+        if dashboard_replacements:
+            replacements.update(dashboard_replacements)
+
         def _load_dash(name: str) -> str:
             if dashboard_dir:
                 path = f'{dashboard_dir}/{name}'
             else:
                 path = get_shared_dashboard_path(name)
-            return load_dashboard(path, replacements=dashboard_replacements)
+            return load_dashboard(path, replacements=replacements)
 
         folder: Folder = Folder(stack, 'hosts-folder', title='Hosts')
         self.folder: Folder = folder

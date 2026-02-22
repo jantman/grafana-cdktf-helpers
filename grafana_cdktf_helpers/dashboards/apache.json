@@ -27,7 +27,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "k2I1C4hVz"
+        "uid": "${prom_uid}"
       },
       "fieldConfig": {
         "defaults": {
@@ -91,7 +91,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "k2I1C4hVz"
+            "uid": "${prom_uid}"
           },
           "expr": "apache_uptime_seconds_total{instance=~\"$host:$port\"}",
           "format": "time_series",
@@ -106,7 +106,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "k2I1C4hVz"
+        "uid": "${prom_uid}"
       },
       "fieldConfig": {
         "defaults": {
@@ -220,7 +220,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "k2I1C4hVz"
+            "uid": "${prom_uid}"
           },
           "expr": "count(apache_up{instance=~\"$host:$port\"} == 1)",
           "format": "time_series",
@@ -232,7 +232,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "k2I1C4hVz"
+            "uid": "${prom_uid}"
           },
           "expr": "scalar(count(apache_up{instance=~\"$host:$port\"} == 0))",
           "format": "time_series",
@@ -248,7 +248,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "k2I1C4hVz"
+        "uid": "${prom_uid}"
       },
       "fieldConfig": {
         "defaults": {
@@ -333,7 +333,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "k2I1C4hVz"
+            "uid": "${prom_uid}"
           },
           "expr": "rate(apache_sent_kilobytes_total{instance=~\"$host:$port\"}[5m])",
           "format": "time_series",
@@ -349,7 +349,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "k2I1C4hVz"
+        "uid": "${prom_uid}"
       },
       "fieldConfig": {
         "defaults": {
@@ -434,7 +434,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "k2I1C4hVz"
+            "uid": "${prom_uid}"
           },
           "expr": "rate(apache_accesses_total{instance=~\"$host:$port\"}[5m])",
           "format": "time_series",
@@ -450,7 +450,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "k2I1C4hVz"
+        "uid": "${prom_uid}"
       },
       "fieldConfig": {
         "defaults": {
@@ -535,7 +535,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "k2I1C4hVz"
+            "uid": "${prom_uid}"
           },
           "expr": "apache_scoreboard{instance=~\"$host:$port\"}",
           "format": "time_series",
@@ -551,7 +551,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "k2I1C4hVz"
+        "uid": "${prom_uid}"
       },
       "fieldConfig": {
         "defaults": {
@@ -636,7 +636,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "k2I1C4hVz"
+            "uid": "${prom_uid}"
           },
           "expr": "apache_workers{instance=~\"$host:$port\"}\n",
           "format": "time_series",
@@ -652,7 +652,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "k2I1C4hVz"
+        "uid": "${prom_uid}"
       },
       "fieldConfig": {
         "defaults": {
@@ -738,7 +738,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "k2I1C4hVz"
+            "uid": "${prom_uid}"
           },
           "expr": "apache_cpuload{instance=~\"$host:$port\"}",
           "format": "time_series",
@@ -766,7 +766,7 @@
         },
         "datasource": {
           "type": "prometheus",
-          "uid": "k2I1C4hVz"
+          "uid": "${prom_uid}"
         },
         "definition": "",
         "hide": 0,
@@ -793,7 +793,7 @@
         },
         "datasource": {
           "type": "prometheus",
-          "uid": "k2I1C4hVz"
+          "uid": "${prom_uid}"
         },
         "definition": "",
         "hide": 2,
