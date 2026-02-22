@@ -13,7 +13,7 @@ authors = [
     {name = "Jason Antman"},
 ]
 dependencies = [
-    "cdktf>=0.20.0",
+    "cdktf==0.21.0",
 ]
 
 [project.optional-dependencies]
