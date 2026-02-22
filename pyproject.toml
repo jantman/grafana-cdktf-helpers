@@ -6,7 +6,12 @@ build-backend = "setuptools.build_meta"
 name = "grafana-cdktf-helpers"
 version = "0.1.0"
 description = "Shared CDKTF helper classes for Grafana alert rules, dashboards, and monitoring"
+readme = "README.md"
+license = {text = "MIT"}
 requires-python = ">=3.10"
+authors = [
+    {name = "Jason Antman"},
+]
 dependencies = [
     "cdktf>=0.20.0",
 ]
