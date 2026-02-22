@@ -55,6 +55,12 @@ pytest
 
 Tests mock the CDKTF-generated imports so the package can be tested standalone.
 
+## Releasing
+
+1. Bump `version` in `pyproject.toml`
+2. Push or merge to `main`
+3. The [release workflow](.github/workflows/release.yml) automatically creates a git tag and GitHub Release with a changelog
+
 ## License
 
 MIT

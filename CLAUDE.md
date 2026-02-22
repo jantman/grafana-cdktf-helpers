@@ -47,3 +47,7 @@ Source files import from `imports.grafana.*` — these are CDKTF-generated provi
 ### Dashboard Bundling
 
 `grafana_cdktf_helpers/dashboards/` contains 17 static JSON dashboard files loaded at runtime by `utils.load_dashboard()` with optional placeholder substitution.
+
+## Releasing
+
+Bump `version` in `pyproject.toml` and push/merge to `main`. The `.github/workflows/release.yml` workflow auto-creates a git tag and GitHub Release.
