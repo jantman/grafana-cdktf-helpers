@@ -72,6 +72,37 @@ def test_import_utils():
     assert callable(get_shared_dashboard_path)
 
 
+def test_import_dashboard_builder():
+    from grafana_cdktf_helpers.dashboard_builder import (
+        GridPosition,
+        ThresholdStep,
+        Override,
+        Target,
+        FieldConfig,
+        Panel,
+        TimeseriesPanel,
+        Row,
+        RowContext,
+        Dashboard,
+        Annotation,
+        temperature_panel,
+        humidity_panel,
+        radon_panel,
+    )
+    # Verify all 11 classes + 3 factory functions are importable
+    classes = [
+        GridPosition, ThresholdStep, Override, Target, FieldConfig,
+        Panel, TimeseriesPanel, Row, RowContext, Dashboard, Annotation,
+    ]
+    assert len(classes) == 11
+    for cls in classes:
+        assert callable(cls)
+    factories = [temperature_panel, humidity_panel, radon_panel]
+    assert len(factories) == 3
+    for fn in factories:
+        assert callable(fn)
+
+
 def test_inheritance_chain():
     """Verify the class hierarchy is correct."""
     from grafana_cdktf_helpers.alert_rule_helpers import (

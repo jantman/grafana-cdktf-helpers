@@ -44,6 +44,10 @@ These compose multiple rule groups and dashboards into full monitoring configura
 
 Source files import from `imports.grafana.*` — these are CDKTF-generated provider bindings created per-project by `cdktf get`. They only exist on `sys.path` when running from a consuming project. Tests mock these via `tests/conftest.py` using `sys.modules` patching.
 
+### Dashboard Builder
+
+`dashboard_builder.py` provides a Pythonic, type-safe way to build Grafana dashboards programmatically using dataclasses instead of raw JSON. Key classes: `Dashboard` (container with `datasource_uid`, configurable `dashboard_id`/`version`/`schema_version`), `TimeseriesPanel`, `Row` (collapsible sections), `Target` (Prometheus queries), `FieldConfig` (visualization settings), `GridPosition`, `ThresholdStep`, `Override`, `Annotation`. Factory functions `temperature_panel()`, `humidity_panel()`, `radon_panel()` create common Home Assistant sensor panels. The `Dashboard` propagates its `datasource_uid` to panels that don't specify one.
+
 ### Dashboard Bundling
 
 `grafana_cdktf_helpers/dashboards/` contains 17 static JSON dashboard files loaded at runtime by `utils.load_dashboard()` with optional placeholder substitution.
