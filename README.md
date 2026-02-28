@@ -14,6 +14,7 @@ This package provides reusable Python classes for defining Grafana alert rules, 
 - **`metamonitoring`** — `MetaMonitoring` class for Prometheus/Alertmanager self-monitoring dashboards and alerts.
 - **`hosts`** — `Hosts` class for host-level monitoring (systemd, filesystem, memory, swap, MySQL).
 - **`stack`** — `BaseStack` class providing common CDKTF stack setup (Grafana provider, Prometheus data source, version checks).
+- **`dashboard_builder`** — Pythonic dashboard builder with type-safe dataclasses (`Dashboard`, `TimeseriesPanel`, `Row`, `Target`, `FieldConfig`, etc.) and factory functions for common Home Assistant sensor panels (temperature, humidity, radon).
 - **`utils`** — Dashboard loading utilities with placeholder substitution.
 - **`dashboards/`** — 17 bundled Grafana dashboard JSON files.
 
