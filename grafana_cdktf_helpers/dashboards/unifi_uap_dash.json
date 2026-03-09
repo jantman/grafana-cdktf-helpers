@@ -83,7 +83,7 @@
     "panels": [
         {
             "datasource": {
-                "uid": "${DS_UNIFI_POLLER}"
+                "uid": "${prom_uid}"
             },
             "gridPos": {
                 "h": 3,
@@ -106,7 +106,7 @@
             "targets": [
                 {
                     "datasource": {
-                        "uid": "${DS_UNIFI_POLLER}"
+                        "uid": "${prom_uid}"
                     },
                     "refId": "A"
                 }
@@ -534,7 +534,7 @@
                 "endText": "00:00:00"
             },
             "datasource": {
-                "uid": "${DS_UNIFI_POLLER}"
+                "uid": "${prom_uid}"
             },
             "dateSettings": {
                 "dateFormat": "YYYY-MM-DD",
@@ -583,7 +583,7 @@
             "targets": [
                 {
                     "datasource": {
-                        "uid": "${DS_UNIFI_POLLER}"
+                        "uid": "${prom_uid}"
                     },
                     "refId": "A"
                 }
