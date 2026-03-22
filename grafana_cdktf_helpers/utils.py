@@ -1,12 +1,60 @@
 """Utility functions for CDKTF Grafana projects."""
 import json
 import os
-from typing import Optional, Dict
+from typing import Optional, Dict, List
+
+
+ALL_ANNOTATIONS_QUERY = {
+    "datasource": {
+        "type": "grafana",
+        "uid": "-- Grafana --"
+    },
+    "enable": True,
+    "iconColor": "green",
+    "name": "All Annotations",
+    "target": {
+        "limit": 100,
+        "matchAny": False,
+        "tags": [],
+        "type": "tags"
+    }
+}
+
+
+def ensure_all_annotations(dashboard_json: str) -> str:
+    """
+    Ensure a dashboard JSON string includes the all-annotations query.
+
+    If the dashboard already has an annotation query with empty tags
+    (matching all annotations), it is left unchanged. Otherwise, the
+    query is appended to the annotations list.
+
+    Args:
+        dashboard_json: Dashboard JSON string.
+
+    Returns:
+        Dashboard JSON string with the all-annotations query present.
+    """
+    dashboard = json.loads(dashboard_json)
+    annotations = dashboard.setdefault('annotations', {})
+    ann_list: List = annotations.setdefault('list', [])
+    # Check if an all-annotations query already exists
+    for ann in ann_list:
+        target = ann.get('target', {})
+        if (
+            target.get('type') == 'tags'
+            and target.get('tags') == []
+            and ann.get('enable', False)
+        ):
+            return dashboard_json
+    ann_list.append(ALL_ANNOTATIONS_QUERY)
+    return json.dumps(dashboard)
 
 
 def load_dashboard(
     path: str,
-    replacements: Optional[Dict[str, str]] = None
+    replacements: Optional[Dict[str, str]] = None,
+    add_all_annotations: bool = True,
 ) -> str:
     """
     Load a dashboard JSON file and optionally apply string replacements.
@@ -15,12 +63,16 @@ def load_dashboard(
         path: Path to the JSON file (absolute or relative to cwd).
         replacements: Optional dict of {placeholder: value} replacements
             to apply to the raw JSON string before returning.
+        add_all_annotations: If True (default), inject an annotation query
+            that shows all annotations on this dashboard.
 
     Returns:
         The JSON string (with replacements applied if any).
     """
     with open(path) as f:
         content = f.read()
+    if add_all_annotations:
+        content = ensure_all_annotations(content)
     if replacements:
         for placeholder, value in replacements.items():
             content = content.replace(placeholder, value)
@@ -46,6 +98,7 @@ def get_shared_dashboard_path(name: str) -> str:
 def load_zoneminder_dashboard(
     include_zm_detect: bool = False,
     replacements: Optional[Dict[str, str]] = None,
+    add_all_annotations: bool = True,
 ) -> str:
     """
     Load the bundled ZoneMinder dashboard JSON, optionally including
@@ -59,6 +112,8 @@ def load_zoneminder_dashboard(
             (ML object detection metrics) to the dashboard.
         replacements: Optional dict of {placeholder: value} replacements
             to apply to the raw JSON string before returning.
+        add_all_annotations: If True (default), inject an annotation query
+            that shows all annotations on this dashboard.
 
     Returns:
         The dashboard JSON string ready for use with CDKTF Dashboard.
@@ -74,6 +129,8 @@ def load_zoneminder_dashboard(
             detect_panels = json.load(f)
         dashboard['panels'].extend(detect_panels)
     content = json.dumps(dashboard)
+    if add_all_annotations:
+        content = ensure_all_annotations(content)
     if replacements:
         for placeholder, value in replacements.items():
             content = content.replace(placeholder, value)

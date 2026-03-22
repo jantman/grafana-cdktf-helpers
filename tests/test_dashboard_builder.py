@@ -436,10 +436,12 @@ class TestDashboard:
         d.annotations.append(Annotation("deploy", "green", ["deploy"]))
         result = json.loads(d.to_json())
         annotations = result["annotations"]["list"]
-        # Built-in + 1 custom
-        assert len(annotations) == 2
+        # Built-in + all-annotations + 1 custom
+        assert len(annotations) == 3
         assert annotations[0]["builtIn"] == 1
-        assert annotations[1]["name"] == "deploy"
+        assert annotations[1]["name"] == "All Annotations"
+        assert annotations[1]["target"]["tags"] == []
+        assert annotations[2]["name"] == "deploy"
 
     def test_collapsed_row_json(self):
         d = Dashboard("Test", datasource_uid=DS_UID)

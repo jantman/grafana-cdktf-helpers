@@ -449,6 +449,21 @@ class Dashboard:
                 "iconColor": "rgba(0, 211, 255, 1)",
                 "name": "Annotations & Alerts",
                 "type": "dashboard"
+            },
+            {
+                "datasource": {
+                    "type": "grafana",
+                    "uid": "-- Grafana --"
+                },
+                "enable": True,
+                "iconColor": "green",
+                "name": "All Annotations",
+                "target": {
+                    "limit": 100,
+                    "matchAny": False,
+                    "tags": [],
+                    "type": "tags"
+                }
             }
         ]
 
