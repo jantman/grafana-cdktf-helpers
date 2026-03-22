@@ -1,0 +1,2301 @@
+[
+  {
+    "collapsed": false,
+    "gridPos": {
+      "h": 1,
+      "w": 24,
+      "x": 0,
+      "y": 60
+    },
+    "id": 42,
+    "panels": [],
+    "title": "zm_detect - Startup/Initialization",
+    "type": "row"
+  },
+  {
+    "datasource": {
+      "type": "prometheus",
+      "uid": "${prom_uid}"
+    },
+    "description": "Time to initialize New Relic agent",
+    "fieldConfig": {
+      "defaults": {
+        "color": {
+          "mode": "palette-classic"
+        },
+        "custom": {
+          "axisCenteredZero": false,
+          "axisColorMode": "text",
+          "axisLabel": "",
+          "axisPlacement": "auto",
+          "barAlignment": 0,
+          "drawStyle": "line",
+          "fillOpacity": 10,
+          "gradientMode": "none",
+          "hideFrom": {
+            "legend": false,
+            "tooltip": false,
+            "viz": false
+          },
+          "lineInterpolation": "linear",
+          "lineWidth": 1,
+          "pointSize": 5,
+          "scaleDistribution": {
+            "type": "linear"
+          },
+          "showPoints": "auto",
+          "spanNulls": false,
+          "stacking": {
+            "group": "A",
+            "mode": "none"
+          },
+          "thresholdsStyle": {
+            "mode": "off"
+          }
+        },
+        "mappings": [],
+        "thresholds": {
+          "mode": "absolute",
+          "steps": [
+            {
+              "color": "green",
+              "value": null
+            }
+          ]
+        },
+        "unit": "ms"
+      },
+      "overrides": []
+    },
+    "gridPos": {
+      "h": 8,
+      "w": 12,
+      "x": 0,
+      "y": 61
+    },
+    "id": 43,
+    "options": {
+      "legend": {
+        "calcs": [],
+        "displayMode": "list",
+        "placement": "bottom",
+        "showLegend": true
+      },
+      "tooltip": {
+        "mode": "single",
+        "sort": "none"
+      }
+    },
+    "targets": [
+      {
+        "datasource": {
+          "type": "prometheus",
+          "uid": "${prom_uid}"
+        },
+        "editorMode": "code",
+        "expr": "zm_detect_newrelic_init_time",
+        "instant": false,
+        "legendFormat": "{{quantile}}th Percentile",
+        "range": true,
+        "refId": "A"
+      }
+    ],
+    "title": "NewRelic Init Time",
+    "type": "timeseries"
+  },
+  {
+    "datasource": {
+      "type": "prometheus",
+      "uid": "${prom_uid}"
+    },
+    "description": "Time to import all Python modules",
+    "fieldConfig": {
+      "defaults": {
+        "color": {
+          "mode": "palette-classic"
+        },
+        "custom": {
+          "axisCenteredZero": false,
+          "axisColorMode": "text",
+          "axisLabel": "",
+          "axisPlacement": "auto",
+          "barAlignment": 0,
+          "drawStyle": "line",
+          "fillOpacity": 10,
+          "gradientMode": "none",
+          "hideFrom": {
+            "legend": false,
+            "tooltip": false,
+            "viz": false
+          },
+          "lineInterpolation": "linear",
+          "lineWidth": 1,
+          "pointSize": 5,
+          "scaleDistribution": {
+            "type": "linear"
+          },
+          "showPoints": "auto",
+          "spanNulls": false,
+          "stacking": {
+            "group": "A",
+            "mode": "none"
+          },
+          "thresholdsStyle": {
+            "mode": "off"
+          }
+        },
+        "mappings": [],
+        "thresholds": {
+          "mode": "absolute",
+          "steps": [
+            {
+              "color": "green",
+              "value": null
+            }
+          ]
+        },
+        "unit": "ms"
+      },
+      "overrides": []
+    },
+    "gridPos": {
+      "h": 8,
+      "w": 12,
+      "x": 12,
+      "y": 61
+    },
+    "id": 44,
+    "options": {
+      "legend": {
+        "calcs": [],
+        "displayMode": "list",
+        "placement": "bottom",
+        "showLegend": true
+      },
+      "tooltip": {
+        "mode": "single",
+        "sort": "none"
+      }
+    },
+    "targets": [
+      {
+        "datasource": {
+          "type": "prometheus",
+          "uid": "${prom_uid}"
+        },
+        "editorMode": "code",
+        "expr": "zm_detect_import_time",
+        "instant": false,
+        "legendFormat": "{{quantile}}th Percentile",
+        "range": true,
+        "refId": "A"
+      }
+    ],
+    "title": "Python Import Time",
+    "type": "timeseries"
+  },
+  {
+    "datasource": {
+      "type": "prometheus",
+      "uid": "${prom_uid}"
+    },
+    "description": "Time for main handler initialization",
+    "fieldConfig": {
+      "defaults": {
+        "color": {
+          "mode": "palette-classic"
+        },
+        "custom": {
+          "axisCenteredZero": false,
+          "axisColorMode": "text",
+          "axisLabel": "",
+          "axisPlacement": "auto",
+          "barAlignment": 0,
+          "drawStyle": "line",
+          "fillOpacity": 10,
+          "gradientMode": "none",
+          "hideFrom": {
+            "legend": false,
+            "tooltip": false,
+            "viz": false
+          },
+          "lineInterpolation": "linear",
+          "lineWidth": 1,
+          "pointSize": 5,
+          "scaleDistribution": {
+            "type": "linear"
+          },
+          "showPoints": "auto",
+          "spanNulls": false,
+          "stacking": {
+            "group": "A",
+            "mode": "none"
+          },
+          "thresholdsStyle": {
+            "mode": "off"
+          }
+        },
+        "mappings": [],
+        "thresholds": {
+          "mode": "absolute",
+          "steps": [
+            {
+              "color": "green",
+              "value": null
+            }
+          ]
+        },
+        "unit": "ms"
+      },
+      "overrides": []
+    },
+    "gridPos": {
+      "h": 8,
+      "w": 8,
+      "x": 0,
+      "y": 69
+    },
+    "id": 45,
+    "options": {
+      "legend": {
+        "calcs": [],
+        "displayMode": "list",
+        "placement": "bottom",
+        "showLegend": true
+      },
+      "tooltip": {
+        "mode": "single",
+        "sort": "none"
+      }
+    },
+    "targets": [
+      {
+        "datasource": {
+          "type": "prometheus",
+          "uid": "${prom_uid}"
+        },
+        "editorMode": "code",
+        "expr": "zm_detect_main_handler_init_duration",
+        "instant": false,
+        "legendFormat": "{{quantile}}th Percentile",
+        "range": true,
+        "refId": "A"
+      }
+    ],
+    "title": "Main Handler Init Duration",
+    "type": "timeseries"
+  },
+  {
+    "datasource": {
+      "type": "prometheus",
+      "uid": "${prom_uid}"
+    },
+    "description": "Time from main start to ZoneMinder API initialization",
+    "fieldConfig": {
+      "defaults": {
+        "color": {
+          "mode": "palette-classic"
+        },
+        "custom": {
+          "axisCenteredZero": false,
+          "axisColorMode": "text",
+          "axisLabel": "",
+          "axisPlacement": "auto",
+          "barAlignment": 0,
+          "drawStyle": "line",
+          "fillOpacity": 10,
+          "gradientMode": "none",
+          "hideFrom": {
+            "legend": false,
+            "tooltip": false,
+            "viz": false
+          },
+          "lineInterpolation": "linear",
+          "lineWidth": 1,
+          "pointSize": 5,
+          "scaleDistribution": {
+            "type": "linear"
+          },
+          "showPoints": "auto",
+          "spanNulls": false,
+          "stacking": {
+            "group": "A",
+            "mode": "none"
+          },
+          "thresholdsStyle": {
+            "mode": "off"
+          }
+        },
+        "mappings": [],
+        "thresholds": {
+          "mode": "absolute",
+          "steps": [
+            {
+              "color": "green",
+              "value": null
+            }
+          ]
+        },
+        "unit": "ms"
+      },
+      "overrides": []
+    },
+    "gridPos": {
+      "h": 8,
+      "w": 8,
+      "x": 8,
+      "y": 69
+    },
+    "id": 46,
+    "options": {
+      "legend": {
+        "calcs": [],
+        "displayMode": "list",
+        "placement": "bottom",
+        "showLegend": true
+      },
+      "tooltip": {
+        "mode": "single",
+        "sort": "none"
+      }
+    },
+    "targets": [
+      {
+        "datasource": {
+          "type": "prometheus",
+          "uid": "${prom_uid}"
+        },
+        "editorMode": "code",
+        "expr": "zm_detect_main_to_zmapi_duration",
+        "instant": false,
+        "legendFormat": "{{quantile}}th Percentile",
+        "range": true,
+        "refId": "A"
+      }
+    ],
+    "title": "Main to ZM API Duration",
+    "type": "timeseries"
+  },
+  {
+    "datasource": {
+      "type": "prometheus",
+      "uid": "${prom_uid}"
+    },
+    "description": "Time from ZM API init to ML processing start",
+    "fieldConfig": {
+      "defaults": {
+        "color": {
+          "mode": "palette-classic"
+        },
+        "custom": {
+          "axisCenteredZero": false,
+          "axisColorMode": "text",
+          "axisLabel": "",
+          "axisPlacement": "auto",
+          "barAlignment": 0,
+          "drawStyle": "line",
+          "fillOpacity": 10,
+          "gradientMode": "none",
+          "hideFrom": {
+            "legend": false,
+            "tooltip": false,
+            "viz": false
+          },
+          "lineInterpolation": "linear",
+          "lineWidth": 1,
+          "pointSize": 5,
+          "scaleDistribution": {
+            "type": "linear"
+          },
+          "showPoints": "auto",
+          "spanNulls": false,
+          "stacking": {
+            "group": "A",
+            "mode": "none"
+          },
+          "thresholdsStyle": {
+            "mode": "off"
+          }
+        },
+        "mappings": [],
+        "thresholds": {
+          "mode": "absolute",
+          "steps": [
+            {
+              "color": "green",
+              "value": null
+            }
+          ]
+        },
+        "unit": "ms"
+      },
+      "overrides": []
+    },
+    "gridPos": {
+      "h": 8,
+      "w": 8,
+      "x": 16,
+      "y": 69
+    },
+    "id": 47,
+    "options": {
+      "legend": {
+        "calcs": [],
+        "displayMode": "list",
+        "placement": "bottom",
+        "showLegend": true
+      },
+      "tooltip": {
+        "mode": "single",
+        "sort": "none"
+      }
+    },
+    "targets": [
+      {
+        "datasource": {
+          "type": "prometheus",
+          "uid": "${prom_uid}"
+        },
+        "editorMode": "code",
+        "expr": "zm_detect_main_handler_zmapi_to_ml_duration",
+        "instant": false,
+        "legendFormat": "{{quantile}}th Percentile",
+        "range": true,
+        "refId": "A"
+      }
+    ],
+    "title": "ZM API to ML Duration",
+    "type": "timeseries"
+  },
+  {
+    "collapsed": false,
+    "gridPos": {
+      "h": 1,
+      "w": 24,
+      "x": 0,
+      "y": 77
+    },
+    "id": 48,
+    "panels": [],
+    "title": "zm_detect - Token Management",
+    "type": "row"
+  },
+  {
+    "datasource": {
+      "type": "prometheus",
+      "uid": "${prom_uid}"
+    },
+    "description": "Rate of token events (found vs not found)",
+    "fieldConfig": {
+      "defaults": {
+        "color": {
+          "mode": "palette-classic"
+        },
+        "custom": {
+          "axisCenteredZero": false,
+          "axisColorMode": "text",
+          "axisLabel": "",
+          "axisPlacement": "auto",
+          "barAlignment": 0,
+          "drawStyle": "line",
+          "fillOpacity": 10,
+          "gradientMode": "none",
+          "hideFrom": {
+            "legend": false,
+            "tooltip": false,
+            "viz": false
+          },
+          "lineInterpolation": "linear",
+          "lineWidth": 1,
+          "pointSize": 5,
+          "scaleDistribution": {
+            "type": "linear"
+          },
+          "showPoints": "auto",
+          "spanNulls": false,
+          "stacking": {
+            "group": "A",
+            "mode": "none"
+          },
+          "thresholdsStyle": {
+            "mode": "off"
+          }
+        },
+        "mappings": [],
+        "thresholds": {
+          "mode": "absolute",
+          "steps": [
+            {
+              "color": "green",
+              "value": null
+            }
+          ]
+        },
+        "unit": "short"
+      },
+      "overrides": []
+    },
+    "gridPos": {
+      "h": 8,
+      "w": 12,
+      "x": 0,
+      "y": 78
+    },
+    "id": 49,
+    "options": {
+      "legend": {
+        "calcs": [],
+        "displayMode": "list",
+        "placement": "bottom",
+        "showLegend": true
+      },
+      "tooltip": {
+        "mode": "single",
+        "sort": "none"
+      }
+    },
+    "targets": [
+      {
+        "datasource": {
+          "type": "prometheus",
+          "uid": "${prom_uid}"
+        },
+        "editorMode": "code",
+        "expr": "increase(zm_detect_token_found[5m])",
+        "instant": false,
+        "legendFormat": "Token Found",
+        "range": true,
+        "refId": "A"
+      },
+      {
+        "datasource": {
+          "type": "prometheus",
+          "uid": "${prom_uid}"
+        },
+        "editorMode": "code",
+        "expr": "increase(zm_detect_no_token[5m])",
+        "instant": false,
+        "legendFormat": "No Token",
+        "range": true,
+        "refId": "B"
+      }
+    ],
+    "title": "Token Found/Not Found Rate",
+    "type": "timeseries"
+  },
+  {
+    "datasource": {
+      "type": "prometheus",
+      "uid": "${prom_uid}"
+    },
+    "description": "Token retrieval attempts by status",
+    "fieldConfig": {
+      "defaults": {
+        "color": {
+          "mode": "palette-classic"
+        },
+        "custom": {
+          "axisCenteredZero": false,
+          "axisColorMode": "text",
+          "axisLabel": "",
+          "axisPlacement": "auto",
+          "barAlignment": 0,
+          "drawStyle": "line",
+          "fillOpacity": 10,
+          "gradientMode": "none",
+          "hideFrom": {
+            "legend": false,
+            "tooltip": false,
+            "viz": false
+          },
+          "lineInterpolation": "linear",
+          "lineWidth": 1,
+          "pointSize": 5,
+          "scaleDistribution": {
+            "type": "linear"
+          },
+          "showPoints": "auto",
+          "spanNulls": false,
+          "stacking": {
+            "group": "A",
+            "mode": "none"
+          },
+          "thresholdsStyle": {
+            "mode": "off"
+          }
+        },
+        "mappings": [],
+        "thresholds": {
+          "mode": "absolute",
+          "steps": [
+            {
+              "color": "green",
+              "value": null
+            }
+          ]
+        },
+        "unit": "short"
+      },
+      "overrides": []
+    },
+    "gridPos": {
+      "h": 8,
+      "w": 12,
+      "x": 12,
+      "y": 78
+    },
+    "id": 50,
+    "options": {
+      "legend": {
+        "calcs": [],
+        "displayMode": "list",
+        "placement": "bottom",
+        "showLegend": true
+      },
+      "tooltip": {
+        "mode": "single",
+        "sort": "none"
+      }
+    },
+    "targets": [
+      {
+        "datasource": {
+          "type": "prometheus",
+          "uid": "${prom_uid}"
+        },
+        "editorMode": "code",
+        "expr": "increase(zm_detect_token_count[5m])",
+        "instant": false,
+        "legendFormat": "{{status}}",
+        "range": true,
+        "refId": "A"
+      }
+    ],
+    "title": "Token Retrieval Attempts",
+    "type": "timeseries"
+  },
+  {
+    "datasource": {
+      "type": "prometheus",
+      "uid": "${prom_uid}"
+    },
+    "description": "Time to retrieve new ML API token by status",
+    "fieldConfig": {
+      "defaults": {
+        "color": {
+          "mode": "palette-classic"
+        },
+        "custom": {
+          "axisCenteredZero": false,
+          "axisColorMode": "text",
+          "axisLabel": "",
+          "axisPlacement": "auto",
+          "barAlignment": 0,
+          "drawStyle": "line",
+          "fillOpacity": 10,
+          "gradientMode": "none",
+          "hideFrom": {
+            "legend": false,
+            "tooltip": false,
+            "viz": false
+          },
+          "lineInterpolation": "linear",
+          "lineWidth": 1,
+          "pointSize": 5,
+          "scaleDistribution": {
+            "type": "linear"
+          },
+          "showPoints": "auto",
+          "spanNulls": false,
+          "stacking": {
+            "group": "A",
+            "mode": "none"
+          },
+          "thresholdsStyle": {
+            "mode": "off"
+          }
+        },
+        "mappings": [],
+        "thresholds": {
+          "mode": "absolute",
+          "steps": [
+            {
+              "color": "green",
+              "value": null
+            }
+          ]
+        },
+        "unit": "ms"
+      },
+      "overrides": []
+    },
+    "gridPos": {
+      "h": 8,
+      "w": 12,
+      "x": 0,
+      "y": 86
+    },
+    "id": 51,
+    "options": {
+      "legend": {
+        "calcs": [],
+        "displayMode": "list",
+        "placement": "bottom",
+        "showLegend": true
+      },
+      "tooltip": {
+        "mode": "single",
+        "sort": "none"
+      }
+    },
+    "targets": [
+      {
+        "datasource": {
+          "type": "prometheus",
+          "uid": "${prom_uid}"
+        },
+        "editorMode": "code",
+        "expr": "zm_detect_token_time",
+        "instant": false,
+        "legendFormat": "{{status}} {{quantile}}th Percentile",
+        "range": true,
+        "refId": "A"
+      }
+    ],
+    "title": "Token Retrieval Time",
+    "type": "timeseries"
+  },
+  {
+    "collapsed": false,
+    "gridPos": {
+      "h": 1,
+      "w": 24,
+      "x": 0,
+      "y": 94
+    },
+    "id": 52,
+    "panels": [],
+    "title": "zm_detect - ML API Communication",
+    "type": "row"
+  },
+  {
+    "datasource": {
+      "type": "prometheus",
+      "uid": "${prom_uid}"
+    },
+    "description": "ML API POST requests by status code",
+    "fieldConfig": {
+      "defaults": {
+        "color": {
+          "mode": "palette-classic"
+        },
+        "custom": {
+          "axisCenteredZero": false,
+          "axisColorMode": "text",
+          "axisLabel": "",
+          "axisPlacement": "auto",
+          "barAlignment": 0,
+          "drawStyle": "line",
+          "fillOpacity": 10,
+          "gradientMode": "none",
+          "hideFrom": {
+            "legend": false,
+            "tooltip": false,
+            "viz": false
+          },
+          "lineInterpolation": "linear",
+          "lineWidth": 1,
+          "pointSize": 5,
+          "scaleDistribution": {
+            "type": "linear"
+          },
+          "showPoints": "auto",
+          "spanNulls": false,
+          "stacking": {
+            "group": "A",
+            "mode": "none"
+          },
+          "thresholdsStyle": {
+            "mode": "off"
+          }
+        },
+        "mappings": [],
+        "thresholds": {
+          "mode": "absolute",
+          "steps": [
+            {
+              "color": "green",
+              "value": null
+            }
+          ]
+        },
+        "unit": "short"
+      },
+      "overrides": []
+    },
+    "gridPos": {
+      "h": 8,
+      "w": 12,
+      "x": 0,
+      "y": 95
+    },
+    "id": 53,
+    "options": {
+      "legend": {
+        "calcs": [],
+        "displayMode": "list",
+        "placement": "bottom",
+        "showLegend": true
+      },
+      "tooltip": {
+        "mode": "single",
+        "sort": "none"
+      }
+    },
+    "targets": [
+      {
+        "datasource": {
+          "type": "prometheus",
+          "uid": "${prom_uid}"
+        },
+        "editorMode": "code",
+        "expr": "increase(zm_detect_ml_post_status[5m])",
+        "instant": false,
+        "legendFormat": "{{status_code}}",
+        "range": true,
+        "refId": "A"
+      }
+    ],
+    "title": "ML API POST Status",
+    "type": "timeseries"
+  },
+  {
+    "datasource": {
+      "type": "prometheus",
+      "uid": "${prom_uid}"
+    },
+    "description": "Time for ML API POST request by status",
+    "fieldConfig": {
+      "defaults": {
+        "color": {
+          "mode": "palette-classic"
+        },
+        "custom": {
+          "axisCenteredZero": false,
+          "axisColorMode": "text",
+          "axisLabel": "",
+          "axisPlacement": "auto",
+          "barAlignment": 0,
+          "drawStyle": "line",
+          "fillOpacity": 10,
+          "gradientMode": "none",
+          "hideFrom": {
+            "legend": false,
+            "tooltip": false,
+            "viz": false
+          },
+          "lineInterpolation": "linear",
+          "lineWidth": 1,
+          "pointSize": 5,
+          "scaleDistribution": {
+            "type": "linear"
+          },
+          "showPoints": "auto",
+          "spanNulls": false,
+          "stacking": {
+            "group": "A",
+            "mode": "none"
+          },
+          "thresholdsStyle": {
+            "mode": "off"
+          }
+        },
+        "mappings": [],
+        "thresholds": {
+          "mode": "absolute",
+          "steps": [
+            {
+              "color": "green",
+              "value": null
+            }
+          ]
+        },
+        "unit": "ms"
+      },
+      "overrides": []
+    },
+    "gridPos": {
+      "h": 8,
+      "w": 12,
+      "x": 12,
+      "y": 95
+    },
+    "id": 54,
+    "options": {
+      "legend": {
+        "calcs": [],
+        "displayMode": "list",
+        "placement": "bottom",
+        "showLegend": true
+      },
+      "tooltip": {
+        "mode": "single",
+        "sort": "none"
+      }
+    },
+    "targets": [
+      {
+        "datasource": {
+          "type": "prometheus",
+          "uid": "${prom_uid}"
+        },
+        "editorMode": "code",
+        "expr": "zm_detect_ml_post_time",
+        "instant": false,
+        "legendFormat": "{{status}} {{quantile}}th Percentile",
+        "range": true,
+        "refId": "A"
+      }
+    ],
+    "title": "ML API POST Time",
+    "type": "timeseries"
+  },
+  {
+    "collapsed": false,
+    "gridPos": {
+      "h": 1,
+      "w": 24,
+      "x": 0,
+      "y": 103
+    },
+    "id": 55,
+    "panels": [],
+    "title": "zm_detect - Image Processing",
+    "type": "row"
+  },
+  {
+    "datasource": {
+      "type": "prometheus",
+      "uid": "${prom_uid}"
+    },
+    "description": "Image write attempts to ZoneMinder by status",
+    "fieldConfig": {
+      "defaults": {
+        "color": {
+          "mode": "palette-classic"
+        },
+        "custom": {
+          "axisCenteredZero": false,
+          "axisColorMode": "text",
+          "axisLabel": "",
+          "axisPlacement": "auto",
+          "barAlignment": 0,
+          "drawStyle": "line",
+          "fillOpacity": 10,
+          "gradientMode": "none",
+          "hideFrom": {
+            "legend": false,
+            "tooltip": false,
+            "viz": false
+          },
+          "lineInterpolation": "linear",
+          "lineWidth": 1,
+          "pointSize": 5,
+          "scaleDistribution": {
+            "type": "linear"
+          },
+          "showPoints": "auto",
+          "spanNulls": false,
+          "stacking": {
+            "group": "A",
+            "mode": "none"
+          },
+          "thresholdsStyle": {
+            "mode": "off"
+          }
+        },
+        "mappings": [],
+        "thresholds": {
+          "mode": "absolute",
+          "steps": [
+            {
+              "color": "green",
+              "value": null
+            }
+          ]
+        },
+        "unit": "short"
+      },
+      "overrides": []
+    },
+    "gridPos": {
+      "h": 8,
+      "w": 12,
+      "x": 0,
+      "y": 104
+    },
+    "id": 56,
+    "options": {
+      "legend": {
+        "calcs": [],
+        "displayMode": "list",
+        "placement": "bottom",
+        "showLegend": true
+      },
+      "tooltip": {
+        "mode": "single",
+        "sort": "none"
+      }
+    },
+    "targets": [
+      {
+        "datasource": {
+          "type": "prometheus",
+          "uid": "${prom_uid}"
+        },
+        "editorMode": "code",
+        "expr": "increase(zm_detect_image_write[5m])",
+        "instant": false,
+        "legendFormat": "{{status}}",
+        "range": true,
+        "refId": "A"
+      }
+    ],
+    "title": "Image Write Attempts",
+    "type": "timeseries"
+  },
+  {
+    "datasource": {
+      "type": "prometheus",
+      "uid": "${prom_uid}"
+    },
+    "description": "Time to fetch and write image from ZoneMinder by status",
+    "fieldConfig": {
+      "defaults": {
+        "color": {
+          "mode": "palette-classic"
+        },
+        "custom": {
+          "axisCenteredZero": false,
+          "axisColorMode": "text",
+          "axisLabel": "",
+          "axisPlacement": "auto",
+          "barAlignment": 0,
+          "drawStyle": "line",
+          "fillOpacity": 10,
+          "gradientMode": "none",
+          "hideFrom": {
+            "legend": false,
+            "tooltip": false,
+            "viz": false
+          },
+          "lineInterpolation": "linear",
+          "lineWidth": 1,
+          "pointSize": 5,
+          "scaleDistribution": {
+            "type": "linear"
+          },
+          "showPoints": "auto",
+          "spanNulls": false,
+          "stacking": {
+            "group": "A",
+            "mode": "none"
+          },
+          "thresholdsStyle": {
+            "mode": "off"
+          }
+        },
+        "mappings": [],
+        "thresholds": {
+          "mode": "absolute",
+          "steps": [
+            {
+              "color": "green",
+              "value": null
+            }
+          ]
+        },
+        "unit": "ms"
+      },
+      "overrides": []
+    },
+    "gridPos": {
+      "h": 8,
+      "w": 12,
+      "x": 12,
+      "y": 104
+    },
+    "id": 57,
+    "options": {
+      "legend": {
+        "calcs": [],
+        "displayMode": "list",
+        "placement": "bottom",
+        "showLegend": true
+      },
+      "tooltip": {
+        "mode": "single",
+        "sort": "none"
+      }
+    },
+    "targets": [
+      {
+        "datasource": {
+          "type": "prometheus",
+          "uid": "${prom_uid}"
+        },
+        "editorMode": "code",
+        "expr": "zm_detect_image_write_duration",
+        "instant": false,
+        "legendFormat": "{{status}} {{quantile}}th Percentile",
+        "range": true,
+        "refId": "A"
+      }
+    ],
+    "title": "Image Write Duration",
+    "type": "timeseries"
+  },
+  {
+    "collapsed": false,
+    "gridPos": {
+      "h": 1,
+      "w": 24,
+      "x": 0,
+      "y": 112
+    },
+    "id": 58,
+    "panels": [],
+    "title": "zm_detect - Remote ML Detection",
+    "type": "row"
+  },
+  {
+    "datasource": {
+      "type": "prometheus",
+      "uid": "${prom_uid}"
+    },
+    "description": "Remote ML detection attempts by status",
+    "fieldConfig": {
+      "defaults": {
+        "color": {
+          "mode": "palette-classic"
+        },
+        "custom": {
+          "axisCenteredZero": false,
+          "axisColorMode": "text",
+          "axisLabel": "",
+          "axisPlacement": "auto",
+          "barAlignment": 0,
+          "drawStyle": "line",
+          "fillOpacity": 10,
+          "gradientMode": "none",
+          "hideFrom": {
+            "legend": false,
+            "tooltip": false,
+            "viz": false
+          },
+          "lineInterpolation": "linear",
+          "lineWidth": 1,
+          "pointSize": 5,
+          "scaleDistribution": {
+            "type": "linear"
+          },
+          "showPoints": "auto",
+          "spanNulls": false,
+          "stacking": {
+            "group": "A",
+            "mode": "none"
+          },
+          "thresholdsStyle": {
+            "mode": "off"
+          }
+        },
+        "mappings": [],
+        "thresholds": {
+          "mode": "absolute",
+          "steps": [
+            {
+              "color": "green",
+              "value": null
+            }
+          ]
+        },
+        "unit": "short"
+      },
+      "overrides": []
+    },
+    "gridPos": {
+      "h": 8,
+      "w": 12,
+      "x": 0,
+      "y": 113
+    },
+    "id": 59,
+    "options": {
+      "legend": {
+        "calcs": [],
+        "displayMode": "list",
+        "placement": "bottom",
+        "showLegend": true
+      },
+      "tooltip": {
+        "mode": "single",
+        "sort": "none"
+      }
+    },
+    "targets": [
+      {
+        "datasource": {
+          "type": "prometheus",
+          "uid": "${prom_uid}"
+        },
+        "editorMode": "code",
+        "expr": "increase(zm_detect_ml_remote_count[5m])",
+        "instant": false,
+        "legendFormat": "{{status}}",
+        "range": true,
+        "refId": "A"
+      }
+    ],
+    "title": "Remote ML Detection Count",
+    "type": "timeseries"
+  },
+  {
+    "datasource": {
+      "type": "prometheus",
+      "uid": "${prom_uid}"
+    },
+    "description": "Total time for remote detection by status",
+    "fieldConfig": {
+      "defaults": {
+        "color": {
+          "mode": "palette-classic"
+        },
+        "custom": {
+          "axisCenteredZero": false,
+          "axisColorMode": "text",
+          "axisLabel": "",
+          "axisPlacement": "auto",
+          "barAlignment": 0,
+          "drawStyle": "line",
+          "fillOpacity": 10,
+          "gradientMode": "none",
+          "hideFrom": {
+            "legend": false,
+            "tooltip": false,
+            "viz": false
+          },
+          "lineInterpolation": "linear",
+          "lineWidth": 1,
+          "pointSize": 5,
+          "scaleDistribution": {
+            "type": "linear"
+          },
+          "showPoints": "auto",
+          "spanNulls": false,
+          "stacking": {
+            "group": "A",
+            "mode": "none"
+          },
+          "thresholdsStyle": {
+            "mode": "off"
+          }
+        },
+        "mappings": [],
+        "thresholds": {
+          "mode": "absolute",
+          "steps": [
+            {
+              "color": "green",
+              "value": null
+            }
+          ]
+        },
+        "unit": "ms"
+      },
+      "overrides": []
+    },
+    "gridPos": {
+      "h": 8,
+      "w": 12,
+      "x": 12,
+      "y": 113
+    },
+    "id": 60,
+    "options": {
+      "legend": {
+        "calcs": [],
+        "displayMode": "list",
+        "placement": "bottom",
+        "showLegend": true
+      },
+      "tooltip": {
+        "mode": "single",
+        "sort": "none"
+      }
+    },
+    "targets": [
+      {
+        "datasource": {
+          "type": "prometheus",
+          "uid": "${prom_uid}"
+        },
+        "editorMode": "code",
+        "expr": "zm_detect_ml_remote_duration",
+        "instant": false,
+        "legendFormat": "{{status}} {{quantile}}th Percentile",
+        "range": true,
+        "refId": "A"
+      }
+    ],
+    "title": "Remote ML Detection Duration",
+    "type": "timeseries"
+  },
+  {
+    "datasource": {
+      "type": "prometheus",
+      "uid": "${prom_uid}"
+    },
+    "description": "ML gateway failures and fallback to local detection",
+    "fieldConfig": {
+      "defaults": {
+        "color": {
+          "mode": "palette-classic"
+        },
+        "custom": {
+          "axisCenteredZero": false,
+          "axisColorMode": "text",
+          "axisLabel": "",
+          "axisPlacement": "auto",
+          "barAlignment": 0,
+          "drawStyle": "line",
+          "fillOpacity": 10,
+          "gradientMode": "none",
+          "hideFrom": {
+            "legend": false,
+            "tooltip": false,
+            "viz": false
+          },
+          "lineInterpolation": "linear",
+          "lineWidth": 1,
+          "pointSize": 5,
+          "scaleDistribution": {
+            "type": "linear"
+          },
+          "showPoints": "auto",
+          "spanNulls": false,
+          "stacking": {
+            "group": "A",
+            "mode": "none"
+          },
+          "thresholdsStyle": {
+            "mode": "off"
+          }
+        },
+        "mappings": [],
+        "thresholds": {
+          "mode": "absolute",
+          "steps": [
+            {
+              "color": "green",
+              "value": null
+            }
+          ]
+        },
+        "unit": "short"
+      },
+      "overrides": []
+    },
+    "gridPos": {
+      "h": 8,
+      "w": 12,
+      "x": 0,
+      "y": 121
+    },
+    "id": 61,
+    "options": {
+      "legend": {
+        "calcs": [],
+        "displayMode": "list",
+        "placement": "bottom",
+        "showLegend": true
+      },
+      "tooltip": {
+        "mode": "single",
+        "sort": "none"
+      }
+    },
+    "targets": [
+      {
+        "datasource": {
+          "type": "prometheus",
+          "uid": "${prom_uid}"
+        },
+        "editorMode": "code",
+        "expr": "increase(zm_detect_ml_gateway_failure[5m])",
+        "instant": false,
+        "legendFormat": "Gateway Failures",
+        "range": true,
+        "refId": "A"
+      },
+      {
+        "datasource": {
+          "type": "prometheus",
+          "uid": "${prom_uid}"
+        },
+        "editorMode": "code",
+        "expr": "increase(zm_detect_ml_gateway_fallback[5m])",
+        "instant": false,
+        "legendFormat": "Fallback to Local",
+        "range": true,
+        "refId": "B"
+      }
+    ],
+    "title": "ML Gateway Failures & Fallbacks",
+    "type": "timeseries"
+  },
+  {
+    "collapsed": false,
+    "gridPos": {
+      "h": 1,
+      "w": 24,
+      "x": 0,
+      "y": 129
+    },
+    "id": 62,
+    "panels": [],
+    "title": "zm_detect - Main Handler Processing Stages",
+    "type": "row"
+  },
+  {
+    "datasource": {
+      "type": "prometheus",
+      "uid": "${prom_uid}"
+    },
+    "description": "Time from ML detection to post-processing",
+    "fieldConfig": {
+      "defaults": {
+        "color": {
+          "mode": "palette-classic"
+        },
+        "custom": {
+          "axisCenteredZero": false,
+          "axisColorMode": "text",
+          "axisLabel": "",
+          "axisPlacement": "auto",
+          "barAlignment": 0,
+          "drawStyle": "line",
+          "fillOpacity": 10,
+          "gradientMode": "none",
+          "hideFrom": {
+            "legend": false,
+            "tooltip": false,
+            "viz": false
+          },
+          "lineInterpolation": "linear",
+          "lineWidth": 1,
+          "pointSize": 5,
+          "scaleDistribution": {
+            "type": "linear"
+          },
+          "showPoints": "auto",
+          "spanNulls": false,
+          "stacking": {
+            "group": "A",
+            "mode": "none"
+          },
+          "thresholdsStyle": {
+            "mode": "off"
+          }
+        },
+        "mappings": [],
+        "thresholds": {
+          "mode": "absolute",
+          "steps": [
+            {
+              "color": "green",
+              "value": null
+            }
+          ]
+        },
+        "unit": "ms"
+      },
+      "overrides": []
+    },
+    "gridPos": {
+      "h": 8,
+      "w": 12,
+      "x": 0,
+      "y": 130
+    },
+    "id": 63,
+    "options": {
+      "legend": {
+        "calcs": [],
+        "displayMode": "list",
+        "placement": "bottom",
+        "showLegend": true
+      },
+      "tooltip": {
+        "mode": "single",
+        "sort": "none"
+      }
+    },
+    "targets": [
+      {
+        "datasource": {
+          "type": "prometheus",
+          "uid": "${prom_uid}"
+        },
+        "editorMode": "code",
+        "expr": "zm_detect_main_handler_ml_to_after_duration",
+        "instant": false,
+        "legendFormat": "{{quantile}}th Percentile",
+        "range": true,
+        "refId": "A"
+      }
+    ],
+    "title": "ML to Post-Processing Duration",
+    "type": "timeseries"
+  },
+  {
+    "datasource": {
+      "type": "prometheus",
+      "uid": "${prom_uid}"
+    },
+    "description": "Time from post-processing to drawing bounding boxes",
+    "fieldConfig": {
+      "defaults": {
+        "color": {
+          "mode": "palette-classic"
+        },
+        "custom": {
+          "axisCenteredZero": false,
+          "axisColorMode": "text",
+          "axisLabel": "",
+          "axisPlacement": "auto",
+          "barAlignment": 0,
+          "drawStyle": "line",
+          "fillOpacity": 10,
+          "gradientMode": "none",
+          "hideFrom": {
+            "legend": false,
+            "tooltip": false,
+            "viz": false
+          },
+          "lineInterpolation": "linear",
+          "lineWidth": 1,
+          "pointSize": 5,
+          "scaleDistribution": {
+            "type": "linear"
+          },
+          "showPoints": "auto",
+          "spanNulls": false,
+          "stacking": {
+            "group": "A",
+            "mode": "none"
+          },
+          "thresholdsStyle": {
+            "mode": "off"
+          }
+        },
+        "mappings": [],
+        "thresholds": {
+          "mode": "absolute",
+          "steps": [
+            {
+              "color": "green",
+              "value": null
+            }
+          ]
+        },
+        "unit": "ms"
+      },
+      "overrides": []
+    },
+    "gridPos": {
+      "h": 8,
+      "w": 12,
+      "x": 12,
+      "y": 130
+    },
+    "id": 64,
+    "options": {
+      "legend": {
+        "calcs": [],
+        "displayMode": "list",
+        "placement": "bottom",
+        "showLegend": true
+      },
+      "tooltip": {
+        "mode": "single",
+        "sort": "none"
+      }
+    },
+    "targets": [
+      {
+        "datasource": {
+          "type": "prometheus",
+          "uid": "${prom_uid}"
+        },
+        "editorMode": "code",
+        "expr": "zm_detect_main_handler_after_to_draw_duration",
+        "instant": false,
+        "legendFormat": "{{quantile}}th Percentile",
+        "range": true,
+        "refId": "A"
+      }
+    ],
+    "title": "Post-Processing to Draw Duration",
+    "type": "timeseries"
+  },
+  {
+    "datasource": {
+      "type": "prometheus",
+      "uid": "${prom_uid}"
+    },
+    "description": "Time to draw bounding boxes on image",
+    "fieldConfig": {
+      "defaults": {
+        "color": {
+          "mode": "palette-classic"
+        },
+        "custom": {
+          "axisCenteredZero": false,
+          "axisColorMode": "text",
+          "axisLabel": "",
+          "axisPlacement": "auto",
+          "barAlignment": 0,
+          "drawStyle": "line",
+          "fillOpacity": 10,
+          "gradientMode": "none",
+          "hideFrom": {
+            "legend": false,
+            "tooltip": false,
+            "viz": false
+          },
+          "lineInterpolation": "linear",
+          "lineWidth": 1,
+          "pointSize": 5,
+          "scaleDistribution": {
+            "type": "linear"
+          },
+          "showPoints": "auto",
+          "spanNulls": false,
+          "stacking": {
+            "group": "A",
+            "mode": "none"
+          },
+          "thresholdsStyle": {
+            "mode": "off"
+          }
+        },
+        "mappings": [],
+        "thresholds": {
+          "mode": "absolute",
+          "steps": [
+            {
+              "color": "green",
+              "value": null
+            }
+          ]
+        },
+        "unit": "ms"
+      },
+      "overrides": []
+    },
+    "gridPos": {
+      "h": 8,
+      "w": 8,
+      "x": 0,
+      "y": 138
+    },
+    "id": 65,
+    "options": {
+      "legend": {
+        "calcs": [],
+        "displayMode": "list",
+        "placement": "bottom",
+        "showLegend": true
+      },
+      "tooltip": {
+        "mode": "single",
+        "sort": "none"
+      }
+    },
+    "targets": [
+      {
+        "datasource": {
+          "type": "prometheus",
+          "uid": "${prom_uid}"
+        },
+        "editorMode": "code",
+        "expr": "zm_detect_main_handler_draw_duration",
+        "instant": false,
+        "legendFormat": "{{quantile}}th Percentile",
+        "range": true,
+        "refId": "A"
+      }
+    ],
+    "title": "Bounding Box Draw Duration",
+    "type": "timeseries"
+  },
+  {
+    "datasource": {
+      "type": "prometheus",
+      "uid": "${prom_uid}"
+    },
+    "description": "Time to write detection image to ZoneMinder",
+    "fieldConfig": {
+      "defaults": {
+        "color": {
+          "mode": "palette-classic"
+        },
+        "custom": {
+          "axisCenteredZero": false,
+          "axisColorMode": "text",
+          "axisLabel": "",
+          "axisPlacement": "auto",
+          "barAlignment": 0,
+          "drawStyle": "line",
+          "fillOpacity": 10,
+          "gradientMode": "none",
+          "hideFrom": {
+            "legend": false,
+            "tooltip": false,
+            "viz": false
+          },
+          "lineInterpolation": "linear",
+          "lineWidth": 1,
+          "pointSize": 5,
+          "scaleDistribution": {
+            "type": "linear"
+          },
+          "showPoints": "auto",
+          "spanNulls": false,
+          "stacking": {
+            "group": "A",
+            "mode": "none"
+          },
+          "thresholdsStyle": {
+            "mode": "off"
+          }
+        },
+        "mappings": [],
+        "thresholds": {
+          "mode": "absolute",
+          "steps": [
+            {
+              "color": "green",
+              "value": null
+            }
+          ]
+        },
+        "unit": "ms"
+      },
+      "overrides": []
+    },
+    "gridPos": {
+      "h": 8,
+      "w": 8,
+      "x": 8,
+      "y": 138
+    },
+    "id": 66,
+    "options": {
+      "legend": {
+        "calcs": [],
+        "displayMode": "list",
+        "placement": "bottom",
+        "showLegend": true
+      },
+      "tooltip": {
+        "mode": "single",
+        "sort": "none"
+      }
+    },
+    "targets": [
+      {
+        "datasource": {
+          "type": "prometheus",
+          "uid": "${prom_uid}"
+        },
+        "editorMode": "code",
+        "expr": "zm_detect_main_handler_write_image_to_zm_duration",
+        "instant": false,
+        "legendFormat": "{{quantile}}th Percentile",
+        "range": true,
+        "refId": "A"
+      }
+    ],
+    "title": "Write Image to ZM Duration",
+    "type": "timeseries"
+  },
+  {
+    "datasource": {
+      "type": "prometheus",
+      "uid": "${prom_uid}"
+    },
+    "description": "Time to update event notes in ZoneMinder",
+    "fieldConfig": {
+      "defaults": {
+        "color": {
+          "mode": "palette-classic"
+        },
+        "custom": {
+          "axisCenteredZero": false,
+          "axisColorMode": "text",
+          "axisLabel": "",
+          "axisPlacement": "auto",
+          "barAlignment": 0,
+          "drawStyle": "line",
+          "fillOpacity": 10,
+          "gradientMode": "none",
+          "hideFrom": {
+            "legend": false,
+            "tooltip": false,
+            "viz": false
+          },
+          "lineInterpolation": "linear",
+          "lineWidth": 1,
+          "pointSize": 5,
+          "scaleDistribution": {
+            "type": "linear"
+          },
+          "showPoints": "auto",
+          "spanNulls": false,
+          "stacking": {
+            "group": "A",
+            "mode": "none"
+          },
+          "thresholdsStyle": {
+            "mode": "off"
+          }
+        },
+        "mappings": [],
+        "thresholds": {
+          "mode": "absolute",
+          "steps": [
+            {
+              "color": "green",
+              "value": null
+            }
+          ]
+        },
+        "unit": "ms"
+      },
+      "overrides": []
+    },
+    "gridPos": {
+      "h": 8,
+      "w": 8,
+      "x": 16,
+      "y": 138
+    },
+    "id": 67,
+    "options": {
+      "legend": {
+        "calcs": [],
+        "displayMode": "list",
+        "placement": "bottom",
+        "showLegend": true
+      },
+      "tooltip": {
+        "mode": "single",
+        "sort": "none"
+      }
+    },
+    "targets": [
+      {
+        "datasource": {
+          "type": "prometheus",
+          "uid": "${prom_uid}"
+        },
+        "editorMode": "code",
+        "expr": "zm_detect_main_handler_notes_duration",
+        "instant": false,
+        "legendFormat": "Notes Update",
+        "range": true,
+        "refId": "A"
+      }
+    ],
+    "title": "Event Notes Update Duration",
+    "type": "timeseries"
+  },
+  {
+    "datasource": {
+      "type": "prometheus",
+      "uid": "${prom_uid}"
+    },
+    "description": "Time to create animation from burst frames",
+    "fieldConfig": {
+      "defaults": {
+        "color": {
+          "mode": "palette-classic"
+        },
+        "custom": {
+          "axisCenteredZero": false,
+          "axisColorMode": "text",
+          "axisLabel": "",
+          "axisPlacement": "auto",
+          "barAlignment": 0,
+          "drawStyle": "line",
+          "fillOpacity": 10,
+          "gradientMode": "none",
+          "hideFrom": {
+            "legend": false,
+            "tooltip": false,
+            "viz": false
+          },
+          "lineInterpolation": "linear",
+          "lineWidth": 1,
+          "pointSize": 5,
+          "scaleDistribution": {
+            "type": "linear"
+          },
+          "showPoints": "auto",
+          "spanNulls": false,
+          "stacking": {
+            "group": "A",
+            "mode": "none"
+          },
+          "thresholdsStyle": {
+            "mode": "off"
+          }
+        },
+        "mappings": [],
+        "thresholds": {
+          "mode": "absolute",
+          "steps": [
+            {
+              "color": "green",
+              "value": null
+            }
+          ]
+        },
+        "unit": "ms"
+      },
+      "overrides": []
+    },
+    "gridPos": {
+      "h": 8,
+      "w": 12,
+      "x": 0,
+      "y": 146
+    },
+    "id": 68,
+    "options": {
+      "legend": {
+        "calcs": [],
+        "displayMode": "list",
+        "placement": "bottom",
+        "showLegend": true
+      },
+      "tooltip": {
+        "mode": "single",
+        "sort": "none"
+      }
+    },
+    "targets": [
+      {
+        "datasource": {
+          "type": "prometheus",
+          "uid": "${prom_uid}"
+        },
+        "editorMode": "code",
+        "expr": "zm_detect_main_handler_animation_duration",
+        "instant": false,
+        "legendFormat": "{{quantile}}th Percentile",
+        "range": true,
+        "refId": "A"
+      }
+    ],
+    "title": "Animation Creation Duration",
+    "type": "timeseries"
+  },
+  {
+    "collapsed": false,
+    "gridPos": {
+      "h": 1,
+      "w": 24,
+      "x": 0,
+      "y": 154
+    },
+    "id": 69,
+    "panels": [],
+    "title": "zm_detect - Overall Results",
+    "type": "row"
+  },
+  {
+    "datasource": {
+      "type": "prometheus",
+      "uid": "${prom_uid}"
+    },
+    "description": "Main handler completion by status",
+    "fieldConfig": {
+      "defaults": {
+        "color": {
+          "mode": "palette-classic"
+        },
+        "custom": {
+          "axisCenteredZero": false,
+          "axisColorMode": "text",
+          "axisLabel": "",
+          "axisPlacement": "auto",
+          "barAlignment": 0,
+          "drawStyle": "line",
+          "fillOpacity": 10,
+          "gradientMode": "none",
+          "hideFrom": {
+            "legend": false,
+            "tooltip": false,
+            "viz": false
+          },
+          "lineInterpolation": "linear",
+          "lineWidth": 1,
+          "pointSize": 5,
+          "scaleDistribution": {
+            "type": "linear"
+          },
+          "showPoints": "auto",
+          "spanNulls": false,
+          "stacking": {
+            "group": "A",
+            "mode": "none"
+          },
+          "thresholdsStyle": {
+            "mode": "off"
+          }
+        },
+        "mappings": [],
+        "thresholds": {
+          "mode": "absolute",
+          "steps": [
+            {
+              "color": "green",
+              "value": null
+            }
+          ]
+        },
+        "unit": "short"
+      },
+      "overrides": []
+    },
+    "gridPos": {
+      "h": 8,
+      "w": 8,
+      "x": 0,
+      "y": 155
+    },
+    "id": 70,
+    "options": {
+      "legend": {
+        "calcs": [],
+        "displayMode": "list",
+        "placement": "bottom",
+        "showLegend": true
+      },
+      "tooltip": {
+        "mode": "single",
+        "sort": "none"
+      }
+    },
+    "targets": [
+      {
+        "datasource": {
+          "type": "prometheus",
+          "uid": "${prom_uid}"
+        },
+        "editorMode": "code",
+        "expr": "increase(zm_detect_main_result[5m])",
+        "instant": false,
+        "legendFormat": "{{status}}",
+        "range": true,
+        "refId": "A"
+      }
+    ],
+    "title": "Main Handler Results",
+    "type": "timeseries"
+  },
+  {
+    "datasource": {
+      "type": "prometheus",
+      "uid": "${prom_uid}"
+    },
+    "description": "Total main handler execution time by status",
+    "fieldConfig": {
+      "defaults": {
+        "color": {
+          "mode": "palette-classic"
+        },
+        "custom": {
+          "axisCenteredZero": false,
+          "axisColorMode": "text",
+          "axisLabel": "",
+          "axisPlacement": "auto",
+          "barAlignment": 0,
+          "drawStyle": "line",
+          "fillOpacity": 10,
+          "gradientMode": "none",
+          "hideFrom": {
+            "legend": false,
+            "tooltip": false,
+            "viz": false
+          },
+          "lineInterpolation": "linear",
+          "lineWidth": 1,
+          "pointSize": 5,
+          "scaleDistribution": {
+            "type": "linear"
+          },
+          "showPoints": "auto",
+          "spanNulls": false,
+          "stacking": {
+            "group": "A",
+            "mode": "none"
+          },
+          "thresholdsStyle": {
+            "mode": "off"
+          }
+        },
+        "mappings": [],
+        "thresholds": {
+          "mode": "absolute",
+          "steps": [
+            {
+              "color": "green",
+              "value": null
+            }
+          ]
+        },
+        "unit": "ms"
+      },
+      "overrides": []
+    },
+    "gridPos": {
+      "h": 8,
+      "w": 8,
+      "x": 8,
+      "y": 155
+    },
+    "id": 71,
+    "options": {
+      "legend": {
+        "calcs": [],
+        "displayMode": "list",
+        "placement": "bottom",
+        "showLegend": true
+      },
+      "tooltip": {
+        "mode": "single",
+        "sort": "none"
+      }
+    },
+    "targets": [
+      {
+        "datasource": {
+          "type": "prometheus",
+          "uid": "${prom_uid}"
+        },
+        "editorMode": "code",
+        "expr": "zm_detect_main_duration",
+        "instant": false,
+        "legendFormat": "{{status}} {{quantile}}th Percentile",
+        "range": true,
+        "refId": "A"
+      }
+    ],
+    "title": "Main Handler Duration",
+    "type": "timeseries"
+  },
+  {
+    "datasource": {
+      "type": "prometheus",
+      "uid": "${prom_uid}"
+    },
+    "description": "Total script execution time from start to end by status",
+    "fieldConfig": {
+      "defaults": {
+        "color": {
+          "mode": "palette-classic"
+        },
+        "custom": {
+          "axisCenteredZero": false,
+          "axisColorMode": "text",
+          "axisLabel": "",
+          "axisPlacement": "auto",
+          "barAlignment": 0,
+          "drawStyle": "line",
+          "fillOpacity": 10,
+          "gradientMode": "none",
+          "hideFrom": {
+            "legend": false,
+            "tooltip": false,
+            "viz": false
+          },
+          "lineInterpolation": "linear",
+          "lineWidth": 1,
+          "pointSize": 5,
+          "scaleDistribution": {
+            "type": "linear"
+          },
+          "showPoints": "auto",
+          "spanNulls": false,
+          "stacking": {
+            "group": "A",
+            "mode": "none"
+          },
+          "thresholdsStyle": {
+            "mode": "off"
+          }
+        },
+        "mappings": [],
+        "thresholds": {
+          "mode": "absolute",
+          "steps": [
+            {
+              "color": "green",
+              "value": null
+            }
+          ]
+        },
+        "unit": "ms"
+      },
+      "overrides": []
+    },
+    "gridPos": {
+      "h": 8,
+      "w": 8,
+      "x": 16,
+      "y": 155
+    },
+    "id": 72,
+    "options": {
+      "legend": {
+        "calcs": [],
+        "displayMode": "list",
+        "placement": "bottom",
+        "showLegend": true
+      },
+      "tooltip": {
+        "mode": "single",
+        "sort": "none"
+      }
+    },
+    "targets": [
+      {
+        "datasource": {
+          "type": "prometheus",
+          "uid": "${prom_uid}"
+        },
+        "editorMode": "code",
+        "expr": "zm_detect_script_duration",
+        "instant": false,
+        "legendFormat": "{{status}} {{quantile}}th Percentile",
+        "range": true,
+        "refId": "A"
+      }
+    ],
+    "title": "Total Script Duration",
+    "type": "timeseries"
+  }
+]
