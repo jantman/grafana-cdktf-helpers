@@ -3,11 +3,13 @@ import json
 import os
 import tempfile
 
+import grafana_cdktf_helpers.utils as utils_module
 from grafana_cdktf_helpers.utils import (
     build_all_annotations_query,
     ensure_all_annotations,
     load_dashboard,
     get_shared_dashboard_path,
+    set_annotation_tags,
 )
 
 
@@ -191,3 +193,50 @@ def test_load_dashboard_passes_annotation_tags():
         assert ann[0]['target']['matchAny'] is True
     finally:
         os.unlink(path)
+
+
+def test_ensure_all_annotations_uses_module_level_tags():
+    """When no explicit tags are passed, falls back to module-level tags."""
+    old = utils_module._annotation_tags
+    try:
+        set_annotation_tags(['hvac', 'changes'])
+        dashboard = json.dumps({"title": "Test"})
+        result = ensure_all_annotations(dashboard)
+        data = json.loads(result)
+        ann = data['annotations']['list'][0]
+        assert ann['target']['tags'] == ['hvac', 'changes']
+        assert ann['target']['matchAny'] is True
+    finally:
+        utils_module._annotation_tags = old
+
+
+def test_explicit_tags_override_module_level():
+    """Explicit annotation_tags parameter takes precedence."""
+    old = utils_module._annotation_tags
+    try:
+        set_annotation_tags(['hvac', 'changes'])
+        dashboard = json.dumps({"title": "Test"})
+        result = ensure_all_annotations(dashboard, annotation_tags=['deploy'])
+        data = json.loads(result)
+        ann = data['annotations']['list'][0]
+        assert ann['target']['tags'] == ['deploy']
+    finally:
+        utils_module._annotation_tags = old
+
+
+def test_load_dashboard_uses_module_level_tags():
+    """load_dashboard picks up module-level tags automatically."""
+    old = utils_module._annotation_tags
+    try:
+        set_annotation_tags(['unifi', 'nas1'])
+        with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as f:
+            json.dump({"title": "Test"}, f)
+            path = f.name
+        result = load_dashboard(path)
+        data = json.loads(result)
+        ann = [a for a in data['annotations']['list'] if a['name'] == 'All Annotations']
+        assert ann[0]['target']['tags'] == ['unifi', 'nas1']
+        assert ann[0]['target']['matchAny'] is True
+        os.unlink(path)
+    finally:
+        utils_module._annotation_tags = old

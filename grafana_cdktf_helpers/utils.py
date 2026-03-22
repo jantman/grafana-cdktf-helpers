@@ -4,6 +4,17 @@ import os
 from typing import Optional, Dict, List
 
 
+# Module-level annotation tags, set by BaseStack.__init__() so that
+# all dashboard loading functions pick them up automatically.
+_annotation_tags: Optional[List[str]] = None
+
+
+def set_annotation_tags(tags: List[str]) -> None:
+    """Store annotation tags at module level for automatic injection."""
+    global _annotation_tags
+    _annotation_tags = tags
+
+
 def build_all_annotations_query(
     tags: Optional[List[str]] = None,
 ) -> dict:
@@ -52,11 +63,14 @@ def ensure_all_annotations(
     Args:
         dashboard_json: Dashboard JSON string.
         annotation_tags: Optional list of annotation tags to match.
-            When provided, uses ``matchAny: true``.
+            When provided, uses ``matchAny: true``. If ``None``, falls
+            back to the module-level tags set by
+            :func:`set_annotation_tags`.
 
     Returns:
         Dashboard JSON string with the all-annotations query present.
     """
+    tags = annotation_tags if annotation_tags is not None else _annotation_tags
     dashboard = json.loads(dashboard_json)
     annotations = dashboard.setdefault('annotations', {})
     ann_list: List = annotations.setdefault('list', [])
@@ -65,7 +79,7 @@ def ensure_all_annotations(
         a for a in ann_list
         if a.get('name') != 'All Annotations'
     ]
-    ann_list.append(build_all_annotations_query(annotation_tags))
+    ann_list.append(build_all_annotations_query(tags))
     return json.dumps(dashboard)
 
 

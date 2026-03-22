@@ -69,10 +69,7 @@ class MetaMonitoring:
                 path = f'{dashboard_dir}/{name}'
             else:
                 path = get_shared_dashboard_path(name)
-            return load_dashboard(
-                path, replacements=replacements,
-                annotation_tags=stack.annotation_tags,
-            )
+            return load_dashboard(path, replacements=replacements)
 
         am = _load_dash('alertmanager_dash.json')
         amdash: Dashboard = Dashboard(

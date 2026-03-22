@@ -11,6 +11,7 @@ from constructs import Construct
 from cdktf import TerraformStack
 from imports.grafana.provider import GrafanaProvider
 from imports.grafana.data_grafana_data_source import DataGrafanaDataSource
+from grafana_cdktf_helpers.utils import set_annotation_tags
 
 
 REQUIRED_CDKTF_VERSION = '0.21.0'
@@ -65,6 +66,7 @@ class BaseStack(TerraformStack):
         self.annotation_tags: list[str] = fetch_annotation_tags(
             self.grafana_url, self.auth
         )
+        set_annotation_tags(self.annotation_tags)
 
 
 def fetch_annotation_tags(
