@@ -3,7 +3,14 @@ import json
 import os
 import tempfile
 
-from grafana_cdktf_helpers.utils import load_dashboard, get_shared_dashboard_path
+import grafana_cdktf_helpers.utils as utils_module
+from grafana_cdktf_helpers.utils import (
+    build_all_annotations_query,
+    ensure_all_annotations,
+    load_dashboard,
+    get_shared_dashboard_path,
+    set_annotation_tags,
+)
 
 
 def test_load_dashboard_no_replacements():
@@ -92,3 +99,144 @@ def test_all_shared_dashboards_valid_json():
                 json.load(f)
             except json.JSONDecodeError as e:
                 raise AssertionError(f'{name} is not valid JSON: {e}')
+
+
+# --- build_all_annotations_query ---
+
+def test_build_all_annotations_query_with_tags():
+    q = build_all_annotations_query(['deploy', 'backup'])
+    assert q['target']['tags'] == ['deploy', 'backup']
+    assert q['target']['matchAny'] is True
+    assert q['name'] == 'All Annotations'
+    assert q['enable'] is True
+
+
+def test_build_all_annotations_query_without_tags():
+    q = build_all_annotations_query()
+    assert q['target']['tags'] == []
+    assert q['target']['matchAny'] is False
+
+
+def test_build_all_annotations_query_empty_list():
+    q = build_all_annotations_query([])
+    assert q['target']['tags'] == []
+    assert q['target']['matchAny'] is False
+
+
+# --- ensure_all_annotations ---
+
+def test_ensure_all_annotations_with_tags():
+    dashboard = json.dumps({"title": "Test"})
+    result = ensure_all_annotations(dashboard, annotation_tags=["deploy", "backup"])
+    data = json.loads(result)
+    ann = data['annotations']['list'][0]
+    assert ann['name'] == 'All Annotations'
+    assert ann['target']['tags'] == ['deploy', 'backup']
+    assert ann['target']['matchAny'] is True
+
+
+def test_ensure_all_annotations_without_tags():
+    dashboard = json.dumps({"title": "Test"})
+    result = ensure_all_annotations(dashboard)
+    data = json.loads(result)
+    ann = data['annotations']['list'][0]
+    assert ann['target']['tags'] == []
+    assert ann['target']['matchAny'] is False
+
+
+def test_ensure_all_annotations_replaces_existing():
+    dashboard = json.dumps({
+        "title": "Test",
+        "annotations": {"list": [
+            {"name": "All Annotations", "target": {"tags": [], "matchAny": False}},
+            {"name": "Other", "target": {"tags": ["foo"]}},
+        ]}
+    })
+    result = ensure_all_annotations(dashboard, annotation_tags=["deploy"])
+    data = json.loads(result)
+    all_ann = [a for a in data['annotations']['list'] if a['name'] == 'All Annotations']
+    assert len(all_ann) == 1
+    assert all_ann[0]['target']['tags'] == ['deploy']
+    assert all_ann[0]['target']['matchAny'] is True
+    # Other annotations preserved
+    other = [a for a in data['annotations']['list'] if a['name'] == 'Other']
+    assert len(other) == 1
+
+
+def test_ensure_all_annotations_preserves_other_annotations():
+    dashboard = json.dumps({
+        "title": "Test",
+        "annotations": {"list": [
+            {"name": "Custom", "enable": True, "target": {"tags": ["custom"]}},
+        ]}
+    })
+    result = ensure_all_annotations(dashboard, annotation_tags=["deploy"])
+    data = json.loads(result)
+    assert len(data['annotations']['list']) == 2
+    names = [a['name'] for a in data['annotations']['list']]
+    assert 'Custom' in names
+    assert 'All Annotations' in names
+
+
+# --- load_dashboard with annotation_tags ---
+
+def test_load_dashboard_passes_annotation_tags():
+    with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as f:
+        json.dump({"title": "Test"}, f)
+        path = f.name
+    try:
+        result = load_dashboard(path, annotation_tags=["deploy", "test"])
+        data = json.loads(result)
+        ann = [a for a in data['annotations']['list'] if a['name'] == 'All Annotations']
+        assert len(ann) == 1
+        assert ann[0]['target']['tags'] == ['deploy', 'test']
+        assert ann[0]['target']['matchAny'] is True
+    finally:
+        os.unlink(path)
+
+
+def test_ensure_all_annotations_uses_module_level_tags():
+    """When no explicit tags are passed, falls back to module-level tags."""
+    old = utils_module._annotation_tags
+    try:
+        set_annotation_tags(['hvac', 'changes'])
+        dashboard = json.dumps({"title": "Test"})
+        result = ensure_all_annotations(dashboard)
+        data = json.loads(result)
+        ann = data['annotations']['list'][0]
+        assert ann['target']['tags'] == ['hvac', 'changes']
+        assert ann['target']['matchAny'] is True
+    finally:
+        utils_module._annotation_tags = old
+
+
+def test_explicit_tags_override_module_level():
+    """Explicit annotation_tags parameter takes precedence."""
+    old = utils_module._annotation_tags
+    try:
+        set_annotation_tags(['hvac', 'changes'])
+        dashboard = json.dumps({"title": "Test"})
+        result = ensure_all_annotations(dashboard, annotation_tags=['deploy'])
+        data = json.loads(result)
+        ann = data['annotations']['list'][0]
+        assert ann['target']['tags'] == ['deploy']
+    finally:
+        utils_module._annotation_tags = old
+
+
+def test_load_dashboard_uses_module_level_tags():
+    """load_dashboard picks up module-level tags automatically."""
+    old = utils_module._annotation_tags
+    try:
+        set_annotation_tags(['unifi', 'nas1'])
+        with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as f:
+            json.dump({"title": "Test"}, f)
+            path = f.name
+        result = load_dashboard(path)
+        data = json.loads(result)
+        ann = [a for a in data['annotations']['list'] if a['name'] == 'All Annotations']
+        assert ann[0]['target']['tags'] == ['unifi', 'nas1']
+        assert ann[0]['target']['matchAny'] is True
+        os.unlink(path)
+    finally:
+        utils_module._annotation_tags = old

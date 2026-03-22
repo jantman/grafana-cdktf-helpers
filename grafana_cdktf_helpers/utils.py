@@ -4,50 +4,82 @@ import os
 from typing import Optional, Dict, List
 
 
-ALL_ANNOTATIONS_QUERY = {
-    "datasource": {
-        "type": "grafana",
-        "uid": "-- Grafana --"
-    },
-    "enable": True,
-    "iconColor": "green",
-    "name": "All Annotations",
-    "target": {
-        "limit": 100,
-        "matchAny": False,
-        "tags": [],
-        "type": "tags"
+# Module-level annotation tags, set by BaseStack.__init__() so that
+# all dashboard loading functions pick them up automatically.
+_annotation_tags: Optional[List[str]] = None
+
+
+def set_annotation_tags(tags: List[str]) -> None:
+    """Store annotation tags at module level for automatic injection."""
+    global _annotation_tags
+    _annotation_tags = tags
+
+
+def build_all_annotations_query(
+    tags: Optional[List[str]] = None,
+) -> dict:
+    """Build an annotation query dict that matches annotations by tags.
+
+    Args:
+        tags: List of annotation tags. If non-empty, ``matchAny`` is set
+            to ``True`` so the query matches annotations with ANY of the
+            given tags. If empty or ``None``, falls back to empty tags
+            (legacy behaviour).
+
+    Returns:
+        Annotation query dict suitable for a dashboard annotations list.
+    """
+    return {
+        "datasource": {
+            "type": "grafana",
+            "uid": "-- Grafana --"
+        },
+        "enable": True,
+        "iconColor": "green",
+        "name": "All Annotations",
+        "target": {
+            "limit": 100,
+            "matchAny": bool(tags),
+            "tags": tags or [],
+            "type": "tags"
+        }
     }
-}
 
 
-def ensure_all_annotations(dashboard_json: str) -> str:
+# Backward-compatible alias
+ALL_ANNOTATIONS_QUERY = build_all_annotations_query()
+
+
+def ensure_all_annotations(
+    dashboard_json: str,
+    annotation_tags: Optional[List[str]] = None,
+) -> str:
     """
     Ensure a dashboard JSON string includes the all-annotations query.
 
-    If the dashboard already has an annotation query with empty tags
-    (matching all annotations), it is left unchanged. Otherwise, the
-    query is appended to the annotations list.
+    Any existing "All Annotations" entry is replaced so that re-running
+    synth updates the tag list.
 
     Args:
         dashboard_json: Dashboard JSON string.
+        annotation_tags: Optional list of annotation tags to match.
+            When provided, uses ``matchAny: true``. If ``None``, falls
+            back to the module-level tags set by
+            :func:`set_annotation_tags`.
 
     Returns:
         Dashboard JSON string with the all-annotations query present.
     """
+    tags = annotation_tags if annotation_tags is not None else _annotation_tags
     dashboard = json.loads(dashboard_json)
     annotations = dashboard.setdefault('annotations', {})
     ann_list: List = annotations.setdefault('list', [])
-    # Check if an all-annotations query already exists
-    for ann in ann_list:
-        target = ann.get('target', {})
-        if (
-            target.get('type') == 'tags'
-            and target.get('tags') == []
-            and ann.get('enable', False)
-        ):
-            return dashboard_json
-    ann_list.append(ALL_ANNOTATIONS_QUERY)
+    # Remove any existing "All Annotations" entry
+    ann_list[:] = [
+        a for a in ann_list
+        if a.get('name') != 'All Annotations'
+    ]
+    ann_list.append(build_all_annotations_query(tags))
     return json.dumps(dashboard)
 
 
@@ -55,6 +87,7 @@ def load_dashboard(
     path: str,
     replacements: Optional[Dict[str, str]] = None,
     add_all_annotations: bool = True,
+    annotation_tags: Optional[List[str]] = None,
 ) -> str:
     """
     Load a dashboard JSON file and optionally apply string replacements.
@@ -65,6 +98,8 @@ def load_dashboard(
             to apply to the raw JSON string before returning.
         add_all_annotations: If True (default), inject an annotation query
             that shows all annotations on this dashboard.
+        annotation_tags: Optional list of annotation tags to include in the
+            all-annotations query. When provided, uses ``matchAny: true``.
 
     Returns:
         The JSON string (with replacements applied if any).
@@ -72,7 +107,7 @@ def load_dashboard(
     with open(path) as f:
         content = f.read()
     if add_all_annotations:
-        content = ensure_all_annotations(content)
+        content = ensure_all_annotations(content, annotation_tags=annotation_tags)
     if replacements:
         for placeholder, value in replacements.items():
             content = content.replace(placeholder, value)
@@ -99,6 +134,7 @@ def load_zoneminder_dashboard(
     include_zm_detect: bool = False,
     replacements: Optional[Dict[str, str]] = None,
     add_all_annotations: bool = True,
+    annotation_tags: Optional[List[str]] = None,
 ) -> str:
     """
     Load the bundled ZoneMinder dashboard JSON, optionally including
@@ -114,6 +150,8 @@ def load_zoneminder_dashboard(
             to apply to the raw JSON string before returning.
         add_all_annotations: If True (default), inject an annotation query
             that shows all annotations on this dashboard.
+        annotation_tags: Optional list of annotation tags to include in the
+            all-annotations query. When provided, uses ``matchAny: true``.
 
     Returns:
         The dashboard JSON string ready for use with CDKTF Dashboard.
@@ -130,7 +168,7 @@ def load_zoneminder_dashboard(
         dashboard['panels'].extend(detect_panels)
     content = json.dumps(dashboard)
     if add_all_annotations:
-        content = ensure_all_annotations(content)
+        content = ensure_all_annotations(content, annotation_tags=annotation_tags)
     if replacements:
         for placeholder, value in replacements.items():
             content = content.replace(placeholder, value)
