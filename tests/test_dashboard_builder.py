@@ -441,7 +441,18 @@ class TestDashboard:
         assert annotations[0]["builtIn"] == 1
         assert annotations[1]["name"] == "All Annotations"
         assert annotations[1]["target"]["tags"] == []
+        assert annotations[1]["target"]["matchAny"] is False
         assert annotations[2]["name"] == "deploy"
+
+    def test_annotations_with_tags(self):
+        d = Dashboard("Test", datasource_uid=DS_UID,
+                      annotation_tags=["deploy", "backup"])
+        result = json.loads(d.to_json())
+        annotations = result["annotations"]["list"]
+        all_ann = annotations[1]
+        assert all_ann["name"] == "All Annotations"
+        assert all_ann["target"]["tags"] == ["deploy", "backup"]
+        assert all_ann["target"]["matchAny"] is True
 
     def test_collapsed_row_json(self):
         d = Dashboard("Test", datasource_uid=DS_UID)

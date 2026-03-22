@@ -11,6 +11,8 @@ from typing import List, Optional, Dict, Any, Union
 import json
 import re
 
+from grafana_cdktf_helpers.utils import build_all_annotations_query
+
 
 @dataclass
 class GridPosition:
@@ -299,7 +301,8 @@ class Dashboard:
     def __init__(self, title: str, datasource_uid: str,
                  description: str = "", uid: Optional[str] = None,
                  dashboard_id: Optional[int] = None,
-                 version: int = 1, schema_version: int = 38):
+                 version: int = 1, schema_version: int = 38,
+                 annotation_tags: Optional[List[str]] = None):
         self.title = title
         self.datasource_uid = datasource_uid
         self.description = description
@@ -307,6 +310,7 @@ class Dashboard:
         self.dashboard_id = dashboard_id
         self.version = version
         self.schema_version = schema_version
+        self.annotation_tags: Optional[List[str]] = annotation_tags
         self.rows: List[Row] = []
         self.panels: List[Panel] = []  # For panels not in rows
         self.annotations: List[Annotation] = []
@@ -450,21 +454,7 @@ class Dashboard:
                 "name": "Annotations & Alerts",
                 "type": "dashboard"
             },
-            {
-                "datasource": {
-                    "type": "grafana",
-                    "uid": "-- Grafana --"
-                },
-                "enable": True,
-                "iconColor": "green",
-                "name": "All Annotations",
-                "target": {
-                    "limit": 100,
-                    "matchAny": False,
-                    "tags": [],
-                    "type": "tags"
-                }
-            }
+            build_all_annotations_query(self.annotation_tags),
         ]
 
         for annotation in self.annotations:

@@ -39,7 +39,8 @@ class NutUps:
             replacements={
                 '${prom_uid}': stack.prom.uid,
                 '${upsname}': upsname,
-            }
+            },
+            annotation_tags=stack.annotation_tags,
         )
         dash: Dashboard = Dashboard(
             stack, f'{upsname}-dash', folder=folder_id, config_json=dash_json
