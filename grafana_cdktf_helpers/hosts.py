@@ -31,6 +31,9 @@ class Hosts:
         disable_provenance: Whether to set disable_provenance on RuleGroups.
         daily_timers: Optional dict mapping hostname to list of timer names.
             If provided, creates timer staleness alert rules.
+        host_swap: Optional dict mapping hostname to swap percent threshold.
+            Creates per-host swap alerts with custom thresholds and excludes
+            those hosts from the default 50% swap alert.
         dashboard_dir: Directory containing dashboard JSON files.
             Defaults to the package's bundled dashboards.
         dashboard_replacements: Optional dict of {placeholder: value}
@@ -44,6 +47,7 @@ class Hosts:
         org_id: Optional[str] = None,
         disable_provenance: bool = True,
         daily_timers: Optional[Dict[str, List[str]]] = None,
+        host_swap: Optional[Dict[str, int]] = None,
         dashboard_dir: Optional[str] = None,
         dashboard_replacements: Optional[Dict[str, str]] = None,
     ):
@@ -166,23 +170,43 @@ class Hosts:
                     }
                 ).rule
             )
+        swap_annotations = {
+            "__dashboardUid__": node.uid,
+            "__panelId__": "24",
+            "description": "{{ $values.B.Labels.instance }} swap used is {{ printf \"%.2f\" $values.B.Value }}%",
+            "summary": "{{ $values.B.Labels.instance }} swap used is {{ printf \"%.2f\" $values.B.Value }}%",
+        }
+        if host_swap:
+            exclude = ','.join(f'{h}:9100' for h in host_swap)
+            instance_filter = f', instance!~"{exclude}"'
+        else:
+            instance_filter = ''
         rules.append(
             MetricMeanThresholdRule(
                 stack,
                 name='Swap Percent used',
-                expr='(node_memory_SwapTotal_bytes{job="node"} - '
-                     'node_memory_SwapFree_bytes{job="node"}) / '
-                     'node_memory_SwapTotal_bytes{job="node"} * 100',
+                expr=f'(node_memory_SwapTotal_bytes{{job="node"{instance_filter}}} - '
+                     f'node_memory_SwapFree_bytes{{job="node"{instance_filter}}}) / '
+                     f'node_memory_SwapTotal_bytes{{job="node"{instance_filter}}} * 100',
                 threshold=50, threshold_type='gt', for_='5m',
                 skip_expr_checks=True,
-                annotations={
-                    "__dashboardUid__": node.uid,
-                    "__panelId__": "24",
-                    "description": "{{ $values.B.Labels.instance }} swap used is {{ printf \"%.2f\" $values.B.Value }}%",
-                    "summary": "{{ $values.B.Labels.instance }} swap used is {{ printf \"%.2f\" $values.B.Value }}%",
-                }
+                annotations=swap_annotations,
             ).rule
         )
+        if host_swap:
+            for hostname, threshold in host_swap.items():
+                rules.append(
+                    MetricMeanThresholdRule(
+                        stack,
+                        name=f'{hostname} Swap Percent used',
+                        expr=f'(node_memory_SwapTotal_bytes{{job="node",instance="{hostname}:9100"}} - '
+                             f'node_memory_SwapFree_bytes{{job="node",instance="{hostname}:9100"}}) / '
+                             f'node_memory_SwapTotal_bytes{{job="node",instance="{hostname}:9100"}} * 100',
+                        threshold=threshold, threshold_type='gt', for_='5m',
+                        skip_expr_checks=True,
+                        annotations=swap_annotations,
+                    ).rule
+                )
         RuleGroup(
             stack, 'node-tf', folder_uid=folder.uid, name='node-tf',
             rule=rules, **rg_base
