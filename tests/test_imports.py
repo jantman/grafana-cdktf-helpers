@@ -18,16 +18,17 @@ def test_import_alert_rule_helpers():
         IsHealthySeriesRule,
         InfoLabelValueRule,
         MetricChangeRule,
+        LokiCountAlertRule,
     )
-    # Verify all 10 classes are importable
+    # Verify all 11 classes are importable
     classes = [
         MetricThresholdRule, MetricMeanThresholdRule,
         MetricMinThresholdRule, MetricMaxThresholdRule,
         MetricLastThresholdRule, SystemdInactiveUnitRule,
         BooleanDisappearingSeriesRule, IsHealthySeriesRule,
-        InfoLabelValueRule, MetricChangeRule,
+        InfoLabelValueRule, MetricChangeRule, LokiCountAlertRule,
     ]
-    assert len(classes) == 10
+    assert len(classes) == 11
     for cls in classes:
         assert callable(cls)
 
