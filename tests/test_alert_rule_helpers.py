@@ -172,6 +172,21 @@ class TestLokiCountAlertRule:
         assert kw['for_'] == '5m'
         assert kw['no_data_state'] == 'NoData'
 
+    def test_default_interval_ms_is_1000(self, stack):
+        LokiCountAlertRule(
+            stack=stack, name='n', logql='{x="y"}', annotations={},
+        ).rule
+        a = _data_models_by_ref_id()['A']
+        assert a['intervalMs'] == 1000
+
+    def test_custom_interval_ms(self, stack):
+        LokiCountAlertRule(
+            stack=stack, name='n', logql='{x="y"}', annotations={},
+            interval_ms=15000,
+        ).rule
+        a = _data_models_by_ref_id()['A']
+        assert a['intervalMs'] == 15000
+
     def test_from_propagated_to_relative_time_range(self, stack):
         LokiCountAlertRule(
             stack=stack, name='n', logql='{x="y"}', annotations={},

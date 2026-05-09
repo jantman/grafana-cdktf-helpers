@@ -682,7 +682,7 @@ class InfoLabelValueRule(MetricThresholdRule):
 class LokiCountAlertRule:
     """
     A rule for a RuleGroup that fires when
-    ``count_over_time(<logql>[range_]) <threshold_type> <threshold>``
+    ``count_over_time(<logql> [<range_>]) <threshold_type> <threshold>``
     against a Loki datasource.
 
     Builds the same 3-stage modern alert rule pipeline (Query -> Reduce ->
@@ -703,6 +703,7 @@ class LokiCountAlertRule:
         threshold: float = 0, threshold_type: str = 'gt',
         from_: int = 600, no_data_state: str = 'OK',
         extra_labels: Optional[Dict[str, str]] = None,
+        interval_ms: int = 1000,
     ):
         self.stack: 'BaseStack' = stack
         self.name: str = name
@@ -715,6 +716,7 @@ class LokiCountAlertRule:
         self.threshold_type: str = threshold_type
         self.from_: int = from_
         self.no_data_state: str = no_data_state
+        self.interval_ms: int = interval_ms
         self.extra_labels: Dict[str, str] = {}
         self.labels: Dict[str, str] = {'Severity': self.severity}
         if extra_labels:
@@ -733,7 +735,7 @@ class LokiCountAlertRule:
             "editorMode": "code",
             "expr": expr,
             "hide": False,
-            "intervalMs": 1000,
+            "intervalMs": self.interval_ms,
             "maxDataPoints": 43200,
             "queryType": "range",
             "refId": "A",
