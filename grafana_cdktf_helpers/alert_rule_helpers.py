@@ -679,6 +679,148 @@ class InfoLabelValueRule(MetricThresholdRule):
         )
 
 
+class LokiCountAlertRule:
+    """
+    A rule for a RuleGroup that fires when
+    ``count_over_time(<logql> [<range_>]) <threshold_type> <threshold>``
+    against a Loki datasource.
+
+    Builds the same 3-stage modern alert rule pipeline (Query -> Reduce ->
+    Threshold) as ``MetricThresholdRule``, but with a Loki query stage instead
+    of a Prometheus one. The default threshold (``> 0``) and ``no_data_state``
+    of ``OK`` match the most common log-alerting pattern, where "no log lines"
+    is the safe state.
+
+    The consumer must set ``stack.loki`` to a ``DataGrafanaDataSource`` before
+    instantiating this class. Loki is not assumed to be present on every
+    consuming stack, so it is not auto-created by ``BaseStack``.
+    """
+
+    def __init__(
+        self, stack: 'BaseStack', name: str, logql: str,
+        annotations: Dict[str, str], for_: str = '1m',
+        severity: str = 'warning', range_: str = '10m',
+        threshold: float = 0, threshold_type: str = 'gt',
+        from_: int = 600, no_data_state: str = 'OK',
+        extra_labels: Optional[Dict[str, str]] = None,
+        interval_ms: int = 1000,
+    ):
+        self.stack: 'BaseStack' = stack
+        self.name: str = name
+        self.logql: str = logql
+        self.annotations: Dict[str, str] = annotations
+        self.for_: str = for_
+        self.severity: str = severity
+        self.range_: str = range_
+        self.threshold: float = threshold
+        self.threshold_type: str = threshold_type
+        self.from_: int = from_
+        self.no_data_state: str = no_data_state
+        self.interval_ms: int = interval_ms
+        self.extra_labels: Dict[str, str] = {}
+        self.labels: Dict[str, str] = {'Severity': self.severity}
+        if extra_labels:
+            self.extra_labels = extra_labels
+            self.labels.update(extra_labels)
+        self._rule: Optional[RuleGroupRule] = None
+
+    @property
+    def rule(self) -> RuleGroupRule:
+        if self._rule is not None:
+            return self._rule
+        loki_uid = self.stack.loki.uid
+        expr = f'count_over_time({self.logql} [{self.range_}])'
+        modelA = {
+            "datasource": {"type": "loki", "uid": loki_uid},
+            "editorMode": "code",
+            "expr": expr,
+            "hide": False,
+            "intervalMs": self.interval_ms,
+            "maxDataPoints": 43200,
+            "queryType": "range",
+            "refId": "A",
+        }
+        modelB = {
+            "conditions": [
+                {
+                    "evaluator": {"params": [], "type": "gt"},
+                    "operator": {"type": "and"},
+                    "query": {"params": ["B"]},
+                    "reducer": {"params": [], "type": "last"},
+                    "type": "query",
+                }
+            ],
+            "datasource": {"type": "__expr__", "uid": "-100"},
+            "expression": "A",
+            "hide": False,
+            "intervalMs": 1000,
+            "maxDataPoints": 43200,
+            "reducer": "max",
+            "refId": "B",
+            "type": "reduce",
+        }
+        modelC = {
+            "conditions": [
+                {
+                    "evaluator": {
+                        "params": [self.threshold],
+                        "type": self.threshold_type,
+                    },
+                    "operator": {"type": "and"},
+                    "query": {"params": ["C"]},
+                    "reducer": {"params": [], "type": "last"},
+                    "type": "query",
+                }
+            ],
+            "datasource": {"type": "__expr__", "uid": "-100"},
+            "expression": "B",
+            "hide": False,
+            "intervalMs": 1000,
+            "maxDataPoints": 43200,
+            "refId": "C",
+            "type": "threshold",
+        }
+        self._rule = RuleGroupRule(
+            name=self.name,
+            annotations=self.annotations,
+            for_=self.for_,
+            condition='C',
+            exec_err_state='Error',
+            no_data_state=self.no_data_state,
+            labels=self.labels,
+            data=[
+                RuleGroupRuleData(
+                    datasource_uid=loki_uid,
+                    query_type='range',
+                    ref_id='A',
+                    relative_time_range=RuleGroupRuleDataRelativeTimeRange(
+                        from_=self.from_, to=0
+                    ),
+                    model=json.dumps(modelA, sort_keys=True, indent=4)
+                ),
+                RuleGroupRuleData(
+                    datasource_uid='-100',
+                    query_type='',
+                    ref_id='B',
+                    relative_time_range=RuleGroupRuleDataRelativeTimeRange(
+                        from_=self.from_, to=0
+                    ),
+                    model=json.dumps(modelB, sort_keys=True, indent=4)
+                ),
+                RuleGroupRuleData(
+                    datasource_uid='-100',
+                    query_type='',
+                    ref_id='C',
+                    relative_time_range=RuleGroupRuleDataRelativeTimeRange(
+                        from_=self.from_, to=0
+                    ),
+                    model=json.dumps(modelC, sort_keys=True, indent=4)
+                )
+            ]
+        )
+        return self._rule
+
+
 class MetricChangeRule(MetricThresholdRule):
     """
     One rule for a RuleGroup, that alerts when a metric changes value.
