@@ -33,12 +33,26 @@ class InformationalQuery:
         on every evaluation.
 
         To avoid this, ``__init__`` wraps the supplied ``expr`` in
-        ``({expr}) * 1`` by default; PromQL drops ``__name__`` from the
-        result of any binary operation, so the reduce stage emits a frame
-        whose labels are a strict subset of the firing condition's. Set
-        ``strip_name=False`` to opt out (e.g. when the supplied expression
-        already contains a binary op or you have manually crafted the
-        labels via ``label_replace``).
+        ``({expr}) * 1`` by default. PromQL strips ``__name__`` from the
+        result of an arithmetic binary operation (note: this is specific
+        to arithmetic — comparison operators without ``bool`` and the
+        logical operators ``and`` / ``or`` / ``unless`` preserve
+        ``__name__`` from the LHS), so the wrapped reduce stage emits a
+        frame whose labels no longer collide with the firing condition's
+        own ``__name__``.
+
+        This handles the most common ``$values`` capture failure but is
+        not a guarantee on its own: ``labels.Contains`` also fails if
+        the informational query carries any *additional* labels the
+        firing condition lacks (e.g. an extra ``state="x"`` selector
+        not present in the condition's series). Callers in that
+        situation must drop or rewrite the offending labels via
+        ``label_replace`` themselves.
+
+        Set ``strip_name=False`` to opt out of the ``* 1`` wrap (e.g.
+        when the supplied expression already contains an arithmetic
+        op, or you have manually crafted the labels via
+        ``label_replace`` and want the expression preserved verbatim).
     """
 
     def __init__(
