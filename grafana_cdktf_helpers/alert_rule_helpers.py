@@ -16,17 +16,42 @@ class InformationalQuery:
 
     Each instance contributes two stages to the rule's data list: a Prometheus
     query (refId ``<ref_id>_q``) and a reduce stage (refId ``<ref_id>``).
+
+    .. note::
+
+        Grafana's ngalert engine only populates ``$values.<ref_id>`` when the
+        capture's frame labels are an exact match, subset, or superset of the
+        firing condition's frame labels (see ``labels.Contains`` in
+        ``pkg/services/ngalert/eval/eval.go``). A bare PromQL query like
+        ``nut_battery_runtime_seconds{ups="x"}`` produces a frame with
+        ``__name__="nut_battery_runtime_seconds"``, which conflicts with the
+        firing condition's own ``__name__`` value, so neither label set
+        contains the other and the capture is silently dropped — every
+        annotation referencing ``$values.<ref_id>.Value`` then receives nil
+        and ``humanizeDuration`` (or any other type-strict template function)
+        will increment ``prometheus_template_text_expansion_failures_total``
+        on every evaluation.
+
+        To avoid this, ``__init__`` wraps the supplied ``expr`` in
+        ``({expr}) * 1`` by default; PromQL drops ``__name__`` from the
+        result of any binary operation, so the reduce stage emits a frame
+        whose labels are a strict subset of the firing condition's. Set
+        ``strip_name=False`` to opt out (e.g. when the supplied expression
+        already contains a binary op or you have manually crafted the
+        labels via ``label_replace``).
     """
 
     def __init__(
         self, ref_id: str, expr: str, reducer: str = 'last',
         from_: int = 600, instant_not_range: bool = False,
+        strip_name: bool = True,
     ):
         self.ref_id: str = ref_id
-        self.expr: str = expr
+        self.expr: str = f'({expr}) * 1' if strip_name else expr
         self.reducer: str = reducer
         self.from_: int = from_
         self.instant_not_range: bool = instant_not_range
+        self.strip_name: bool = strip_name
 
 
 class MetricThresholdRule:

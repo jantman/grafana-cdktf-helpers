@@ -243,8 +243,10 @@ class TestInformationalQueries:
 
         models = _data_models_by_ref_id()
 
-        # Informational query D
-        assert models['D_q']['expr'] == 'node_load1'
+        # Informational query D — `* 1` is auto-appended to strip the
+        # PromQL `__name__` label so Grafana's labels.Contains check
+        # populates `$values.D` against the firing-condition frame.
+        assert models['D_q']['expr'] == '(node_load1) * 1'
         assert models['D_q']['datasource'] == {
             'type': 'prometheus', 'uid': 'prom-uid-abc'
         }
@@ -256,7 +258,7 @@ class TestInformationalQueries:
         assert data_kw['D']['datasource_uid'] == '-100'
 
         # Informational query E (instant, custom from_)
-        assert models['E_q']['expr'] == 'node_memory_MemAvailable_bytes'
+        assert models['E_q']['expr'] == '(node_memory_MemAvailable_bytes) * 1'
         assert models['E_q'].get('instant') is True
         assert models['E_q']['range'] is False
         assert models['E']['reducer'] == 'mean'
@@ -387,12 +389,41 @@ class TestInformationalQueries:
         assert _rule_kwargs()['condition'] == 'C'
         models = _data_models_by_ref_id()
         assert models['C']['type'] == 'classic_conditions'
-        # And the informational stages look correct
-        assert models['D_q']['expr'] == 'node_load1'
+        # And the informational stages look correct (strip_name auto-wrap)
+        assert models['D_q']['expr'] == '(node_load1) * 1'
         assert models['D']['type'] == 'reduce'
         assert models['D']['expression'] == 'D_q'
         assert data_kw['D_q']['datasource_uid'] == 'prom-uid-abc'
         assert data_kw['D']['datasource_uid'] == '-100'
+
+    def test_strip_name_default_wraps_expr(self):
+        iq = InformationalQuery(ref_id='D', expr='node_load1')
+        assert iq.expr == '(node_load1) * 1'
+        assert iq.strip_name is True
+
+    def test_strip_name_false_preserves_expr_verbatim(self, stack):
+        iq = InformationalQuery(
+            ref_id='D',
+            expr='label_replace(node_load1, "foo", "bar", "", "")',
+            strip_name=False,
+        )
+        assert iq.expr == (
+            'label_replace(node_load1, "foo", "bar", "", "")'
+        )
+        assert iq.strip_name is False
+
+        # Round-trip through MetricThresholdRule to verify the verbatim
+        # expression makes it into the emitted Prometheus query stage.
+        MetricThresholdRule(
+            stack=stack, name='n',
+            expr='avg_over_time(foo[5m])', reducer='mean',
+            threshold=1.0, threshold_type='gt', annotations={},
+            informational_queries=[iq],
+        ).rule
+        models = _data_models_by_ref_id()
+        assert models['D_q']['expr'] == (
+            'label_replace(node_load1, "foo", "bar", "", "")'
+        )
 
 
 class TestOpenPinAlertRule:
