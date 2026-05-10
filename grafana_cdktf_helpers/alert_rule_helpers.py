@@ -531,7 +531,8 @@ class MetricMeanThresholdRule(MetricThresholdRule):
         additional_query_threshold: Optional[float] = None,
         additional_query_threshold_type: str = 'gt',
         additional_query_from: Optional[int] = None,
-        condition_operator: str = 'and'
+        condition_operator: str = 'and',
+        informational_queries: Optional[List[InformationalQuery]] = None,
     ):
         if not skip_expr_checks:
             assert 'avg_over_time(' in expr or 'sum(' in expr,\
@@ -550,7 +551,8 @@ class MetricMeanThresholdRule(MetricThresholdRule):
             additional_query_threshold=additional_query_threshold,
             additional_query_threshold_type=additional_query_threshold_type,
             additional_query_from=additional_query_from,
-            condition_operator=condition_operator
+            condition_operator=condition_operator,
+            informational_queries=informational_queries,
         )
 
 
@@ -598,7 +600,8 @@ class MetricMinThresholdRule(MetricThresholdRule):
         additional_query_threshold: Optional[float] = None,
         additional_query_threshold_type: str = 'gt',
         additional_query_from: Optional[int] = None,
-        condition_operator: str = 'and'
+        condition_operator: str = 'and',
+        informational_queries: Optional[List[InformationalQuery]] = None,
     ):
         if not skip_expr_checks:
             assert 'min_over_time(' in expr or 'count(' in expr,\
@@ -617,7 +620,8 @@ class MetricMinThresholdRule(MetricThresholdRule):
             additional_query_threshold=additional_query_threshold,
             additional_query_threshold_type=additional_query_threshold_type,
             additional_query_from=additional_query_from,
-            condition_operator=condition_operator
+            condition_operator=condition_operator,
+            informational_queries=informational_queries,
         )
 
 
@@ -638,7 +642,8 @@ class MetricMaxThresholdRule(MetricThresholdRule):
         additional_query_threshold: Optional[float] = None,
         additional_query_threshold_type: str = 'gt',
         additional_query_from: Optional[int] = None,
-        condition_operator: str = 'and'
+        condition_operator: str = 'and',
+        informational_queries: Optional[List[InformationalQuery]] = None,
     ):
         if not skip_expr_checks:
             assert 'max_over_time(' in expr or 'sum(increase(' in expr,\
@@ -657,7 +662,8 @@ class MetricMaxThresholdRule(MetricThresholdRule):
             additional_query_threshold=additional_query_threshold,
             additional_query_threshold_type=additional_query_threshold_type,
             additional_query_from=additional_query_from,
-            condition_operator=condition_operator
+            condition_operator=condition_operator,
+            informational_queries=informational_queries,
         )
 
 
@@ -678,7 +684,8 @@ class MetricLastThresholdRule(MetricThresholdRule):
         additional_query_threshold: Optional[float] = None,
         additional_query_threshold_type: str = 'gt',
         additional_query_from: Optional[int] = None,
-        condition_operator: str = 'and'
+        condition_operator: str = 'and',
+        informational_queries: Optional[List[InformationalQuery]] = None,
     ):
         reducer = 'last'
         super().__init__(
@@ -692,7 +699,8 @@ class MetricLastThresholdRule(MetricThresholdRule):
             additional_query_threshold=additional_query_threshold,
             additional_query_threshold_type=additional_query_threshold_type,
             additional_query_from=additional_query_from,
-            condition_operator=condition_operator
+            condition_operator=condition_operator,
+            informational_queries=informational_queries,
         )
 
 
@@ -713,7 +721,8 @@ class BooleanDisappearingSeriesRule(MetricThresholdRule):
         additional_query_threshold: Optional[float] = None,
         additional_query_threshold_type: str = 'gt',
         additional_query_from: Optional[int] = None,
-        condition_operator: str = 'and'
+        condition_operator: str = 'and',
+        informational_queries: Optional[List[InformationalQuery]] = None,
     ):
         expr = metric + '[' + for_ + ']'
         reducer = 'max'
@@ -729,7 +738,8 @@ class BooleanDisappearingSeriesRule(MetricThresholdRule):
             additional_query_threshold=additional_query_threshold,
             additional_query_threshold_type=additional_query_threshold_type,
             additional_query_from=additional_query_from,
-            condition_operator=condition_operator
+            condition_operator=condition_operator,
+            informational_queries=informational_queries,
         )
 
 
@@ -750,7 +760,8 @@ class IsHealthySeriesRule(MetricThresholdRule):
         additional_query_threshold: Optional[float] = None,
         additional_query_threshold_type: str = 'gt',
         additional_query_from: Optional[int] = None,
-        condition_operator: str = 'and'
+        condition_operator: str = 'and',
+        informational_queries: Optional[List[InformationalQuery]] = None,
     ):
         expr = metric + '[' + for_ + ']'
         reducer = 'mean'
@@ -765,7 +776,8 @@ class IsHealthySeriesRule(MetricThresholdRule):
             additional_query_threshold=additional_query_threshold,
             additional_query_threshold_type=additional_query_threshold_type,
             additional_query_from=additional_query_from,
-            condition_operator=condition_operator
+            condition_operator=condition_operator,
+            informational_queries=informational_queries,
         )
 
 
@@ -789,7 +801,8 @@ class InfoLabelValueRule(MetricThresholdRule):
         additional_query_threshold: Optional[float] = None,
         additional_query_threshold_type: str = 'gt',
         additional_query_from: Optional[int] = None,
-        condition_operator: str = 'and'
+        condition_operator: str = 'and',
+        informational_queries: Optional[List[InformationalQuery]] = None,
     ):
         if annotations is None:
             annotations = {}
@@ -822,7 +835,8 @@ class InfoLabelValueRule(MetricThresholdRule):
             additional_query_threshold=additional_query_threshold,
             additional_query_threshold_type=additional_query_threshold_type,
             additional_query_from=additional_query_from,
-            condition_operator=condition_operator
+            condition_operator=condition_operator,
+            informational_queries=informational_queries,
         )
 
 
@@ -983,7 +997,8 @@ class MetricChangeRule(MetricThresholdRule):
         additional_query_threshold: Optional[float] = None,
         additional_query_threshold_type: str = 'gt',
         additional_query_from: Optional[int] = None,
-        condition_operator: str = 'and'
+        condition_operator: str = 'and',
+        informational_queries: Optional[List[InformationalQuery]] = None,
     ):
         reducer = 'sum'
         expr = f"increase({metric}[{for_}])"
@@ -999,7 +1014,8 @@ class MetricChangeRule(MetricThresholdRule):
             additional_query_threshold=additional_query_threshold,
             additional_query_threshold_type=additional_query_threshold_type,
             additional_query_from=additional_query_from,
-            condition_operator=condition_operator
+            condition_operator=condition_operator,
+            informational_queries=informational_queries,
         )
 
 

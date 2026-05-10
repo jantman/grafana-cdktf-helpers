@@ -6,8 +6,16 @@ import pytest
 
 from grafana_cdktf_helpers import alert_rule_helpers
 from grafana_cdktf_helpers.alert_rule_helpers import (
+    BooleanDisappearingSeriesRule,
+    InfoLabelValueRule,
     InformationalQuery,
+    IsHealthySeriesRule,
     LokiCountAlertRule,
+    MetricChangeRule,
+    MetricLastThresholdRule,
+    MetricMaxThresholdRule,
+    MetricMeanThresholdRule,
+    MetricMinThresholdRule,
     MetricThresholdRule,
     OpenPinAlertRule,
 )
@@ -310,6 +318,53 @@ class TestInformationalQueries:
                     InformationalQuery(ref_id='D_q', expr='y'),
                 ],
             )
+
+    @pytest.mark.parametrize('rule_factory', [
+        lambda stack: MetricMeanThresholdRule(
+            stack=stack, name='n', expr='avg_over_time(foo[5m])',
+            threshold=1.0, threshold_type='gt', annotations={},
+            informational_queries=[InformationalQuery(ref_id='D', expr='x')],
+        ),
+        lambda stack: MetricMinThresholdRule(
+            stack=stack, name='n', expr='min_over_time(foo[5m])',
+            threshold=1.0, annotations={},
+            informational_queries=[InformationalQuery(ref_id='D', expr='x')],
+        ),
+        lambda stack: MetricMaxThresholdRule(
+            stack=stack, name='n', expr='max_over_time(foo[5m])',
+            threshold=1.0, annotations={},
+            informational_queries=[InformationalQuery(ref_id='D', expr='x')],
+        ),
+        lambda stack: MetricLastThresholdRule(
+            stack=stack, name='n', expr='foo',
+            threshold=1.0, threshold_type='gt', annotations={},
+            informational_queries=[InformationalQuery(ref_id='D', expr='x')],
+        ),
+        lambda stack: BooleanDisappearingSeriesRule(
+            stack=stack, name='n', metric='foo', annotations={},
+            informational_queries=[InformationalQuery(ref_id='D', expr='x')],
+        ),
+        lambda stack: IsHealthySeriesRule(
+            stack=stack, name='n', metric='foo', annotations={},
+            informational_queries=[InformationalQuery(ref_id='D', expr='x')],
+        ),
+        lambda stack: InfoLabelValueRule(
+            stack=stack, name='n', metric='foo', metric_label='state',
+            expected_label_value='ok', metric_selectors='', item_name='thing',
+            informational_queries=[InformationalQuery(ref_id='D', expr='x')],
+        ),
+        lambda stack: MetricChangeRule(
+            stack=stack, name='n', metric='foo', annotations={},
+            informational_queries=[InformationalQuery(ref_id='D', expr='x')],
+        ),
+    ])
+    def test_subclasses_forward_informational_queries(
+        self, stack, rule_factory
+    ):
+        rule_factory(stack).rule
+        data_kw = _data_kwargs_by_ref_id()
+        # Whatever the firing-condition stages are, D and D_q must be present.
+        assert {'D', 'D_q'}.issubset(data_kw.keys())
 
     def test_appended_to_classic_conditions_rule(self, stack):
         # Setting both additional_query_expr and additional_query_threshold
