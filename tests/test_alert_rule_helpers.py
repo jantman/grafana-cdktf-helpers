@@ -284,6 +284,61 @@ class TestInformationalQueries:
                 ],
             )
 
+    def test_rejects_ref_id_ending_with_q_suffix(self, stack):
+        with pytest.raises(ValueError, match="must not end with '_q'"):
+            MetricThresholdRule(
+                stack=stack, name='n',
+                expr='avg_over_time(foo[5m])', reducer='mean',
+                threshold=1.0, threshold_type='gt', annotations={},
+                informational_queries=[
+                    InformationalQuery(ref_id='D_q', expr='x'),
+                ],
+            )
+
+    def test_rejects_collision_with_derived_query_stage_ref_id(self, stack):
+        # ref_id='D' generates a 'D_q' query-stage refId; a *separate*
+        # entry whose own ref_id is 'D_q' would emit a second stage with
+        # refId 'D_q'. The `_q`-suffix rule covers this case explicitly,
+        # but exercise it as a regression test.
+        with pytest.raises(ValueError, match="must not end with '_q'"):
+            MetricThresholdRule(
+                stack=stack, name='n',
+                expr='avg_over_time(foo[5m])', reducer='mean',
+                threshold=1.0, threshold_type='gt', annotations={},
+                informational_queries=[
+                    InformationalQuery(ref_id='D', expr='x'),
+                    InformationalQuery(ref_id='D_q', expr='y'),
+                ],
+            )
+
+    def test_appended_to_classic_conditions_rule(self, stack):
+        # Setting both additional_query_expr and additional_query_threshold
+        # forces the classic-conditions code path.
+        MetricThresholdRule(
+            stack=stack, name='n',
+            expr='foo', reducer='mean',
+            threshold=1.0, threshold_type='gt',
+            annotations={},
+            additional_query_expr='bar',
+            additional_query_threshold=2.0,
+            informational_queries=[
+                InformationalQuery(ref_id='D', expr='node_load1'),
+            ],
+        ).rule
+        data_kw = _data_kwargs_by_ref_id()
+        # Classic conditions still emits A, B, C and adds D_q + D
+        assert set(data_kw.keys()) == {'A', 'B', 'C', 'D_q', 'D'}
+        # The classic-conditions stage is still the firing condition
+        assert _rule_kwargs()['condition'] == 'C'
+        models = _data_models_by_ref_id()
+        assert models['C']['type'] == 'classic_conditions'
+        # And the informational stages look correct
+        assert models['D_q']['expr'] == 'node_load1'
+        assert models['D']['type'] == 'reduce'
+        assert models['D']['expression'] == 'D_q'
+        assert data_kw['D_q']['datasource_uid'] == 'prom-uid-abc'
+        assert data_kw['D']['datasource_uid'] == '-100'
+
 
 class TestOpenPinAlertRule:
 

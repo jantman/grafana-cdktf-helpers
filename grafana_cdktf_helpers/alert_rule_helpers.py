@@ -89,18 +89,38 @@ class MetricThresholdRule:
     ) -> List[InformationalQuery]:
         if not queries:
             return []
-        seen: set = set()
+        # Track every refId that will appear in the rule's data list so a
+        # caller cannot accidentally collide the reduce-stage refId of one
+        # entry with the auto-derived `<ref_id>_q` query-stage refId of
+        # another (e.g. ref_id='D' + ref_id='D_q' would both emit a 'D_q'
+        # stage). Pre-seed with the firing-condition refIds.
+        seen: set = {'A', 'B', 'C'}
         for iq in queries:
-            if iq.ref_id in {'A', 'B', 'C'}:
+            if iq.ref_id.endswith('_q'):
                 raise ValueError(
-                    f"InformationalQuery ref_id '{iq.ref_id}' must not be in "
-                    f"{{'A', 'B', 'C'}}; pick a refId starting from 'D'."
+                    f"InformationalQuery ref_id '{iq.ref_id}' must not end "
+                    f"with '_q'; that suffix is reserved for the auto-"
+                    f"generated query-stage refId."
                 )
+            q_ref = f"{iq.ref_id}_q"
             if iq.ref_id in seen:
+                if iq.ref_id in {'A', 'B', 'C'}:
+                    raise ValueError(
+                        f"InformationalQuery ref_id '{iq.ref_id}' must not "
+                        f"be in {{'A', 'B', 'C'}}; pick a refId starting "
+                        f"from 'D'."
+                    )
                 raise ValueError(
                     f"Duplicate InformationalQuery ref_id '{iq.ref_id}'."
                 )
+            if q_ref in seen:
+                raise ValueError(
+                    f"InformationalQuery ref_id '{iq.ref_id}' would derive "
+                    f"query-stage refId '{q_ref}', which collides with "
+                    f"another refId already in use."
+                )
             seen.add(iq.ref_id)
+            seen.add(q_ref)
         return list(queries)
 
     def _build_informational_data_entries(self) -> list:
