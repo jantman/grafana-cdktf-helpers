@@ -29,6 +29,8 @@ class NutUps:
         add_rules: bool = True,
         status_no_data_state: str = 'NoData',
         voltage_high_threshold: int = 125,
+        battery_voltage_low_offset: int = 1,
+        battery_voltage_high_offset: int = 1,
         org_id: Optional[str] = None,
         dashboard_path: Optional[str] = None,
     ):
@@ -102,7 +104,7 @@ class NutUps:
                 name=f'{upsname} Battery Voltage Low [TF]',
                 expr='min_over_time(nut_battery_voltage_volts{ups=\"' +
                      upsname + '\"}[1m])',
-                threshold=battery_voltage - 1,
+                threshold=battery_voltage - battery_voltage_low_offset,
                 annotations={
                     "__dashboardUid__": dash.uid,
                     "__panelId__": "10",
@@ -115,7 +117,7 @@ class NutUps:
                 name=f'{upsname} Battery Voltage High [TF]',
                 expr='max_over_time(nut_battery_voltage_volts{ups=\"' +
                      upsname + '\"}[1m])',
-                threshold=battery_voltage + 1,
+                threshold=battery_voltage + battery_voltage_high_offset,
                 annotations={
                     "__dashboardUid__": dash.uid,
                     "__panelId__": "10",
