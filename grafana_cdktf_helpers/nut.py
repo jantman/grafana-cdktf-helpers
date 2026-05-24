@@ -1,4 +1,5 @@
 """Shared NUT UPS monitoring class for CDKTF Grafana projects."""
+import json
 from typing import TYPE_CHECKING, Optional
 
 from imports.grafana.dashboard import Dashboard
@@ -33,6 +34,7 @@ class NutUps:
         battery_voltage_high_offset: int = 1,
         org_id: Optional[str] = None,
         dashboard_path: Optional[str] = None,
+        logs_logql: Optional[str] = None,
     ):
         if dashboard_path is None:
             dashboard_path = get_shared_dashboard_path('nut-ups-dash.json')
@@ -43,6 +45,10 @@ class NutUps:
                 '${upsname}': upsname,
             }
         )
+        if logs_logql is not None:
+            dash_json = self._add_logs_panel(
+                dash_json, stack.loki.uid, logs_logql
+            )
         dash: Dashboard = Dashboard(
             stack, f'{upsname}-dash', folder=folder_id, config_json=dash_json
         )
@@ -188,3 +194,40 @@ class NutUps:
         if org_id is not None:
             rg_kwargs['org_id'] = org_id
         RuleGroup(stack, upsname, **rg_kwargs)
+
+    @staticmethod
+    def _add_logs_panel(
+        dash_json: str, loki_uid: str, logql: str
+    ) -> str:
+        dash = json.loads(dash_json)
+        max_y = max(
+            (p['gridPos']['y'] + p['gridPos']['h'] for p in dash['panels']),
+            default=0,
+        )
+        dash['panels'].append({
+            "datasource": {"type": "loki", "uid": loki_uid},
+            "gridPos": {"h": 8, "w": 24, "x": 0, "y": max_y},
+            "id": 100,
+            "options": {
+                "dedupStrategy": "none",
+                "enableLogDetails": True,
+                "prettifyLogMessage": False,
+                "showCommonLabels": False,
+                "showLabels": True,
+                "showTime": True,
+                "sortOrder": "Descending",
+                "wrapLogMessage": True,
+            },
+            "targets": [
+                {
+                    "datasource": {"type": "loki", "uid": loki_uid},
+                    "editorMode": "code",
+                    "expr": logql,
+                    "queryType": "range",
+                    "refId": "A",
+                }
+            ],
+            "title": "UPS Event Log",
+            "type": "logs",
+        })
+        return json.dumps(dash)
