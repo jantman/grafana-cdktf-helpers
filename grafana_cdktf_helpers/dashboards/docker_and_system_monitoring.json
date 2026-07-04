@@ -2037,7 +2037,7 @@
                         "uid": "${prom_uid}"
                     },
                     "editorMode": "code",
-                    "expr": "(time() - container_start_time_seconds{instance=~\"$server:.*\",name=~\".+\"})/86400",
+                    "expr": "(time() - container_creation_time_seconds{instance=~\"$server:.*\",name=~\".+\"})/86400",
                     "format": "table",
                     "instant": true,
                     "interval": "",
