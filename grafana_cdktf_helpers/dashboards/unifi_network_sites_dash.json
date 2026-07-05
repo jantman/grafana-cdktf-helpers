@@ -146,7 +146,6 @@
         "x": 0,
         "y": 0
       },
-      "id": 41,
       "maxDataPoints": 100,
       "options": {
         "colorMode": "none",
@@ -222,7 +221,6 @@
         "x": 3,
         "y": 0
       },
-      "id": 42,
       "maxDataPoints": 100,
       "options": {
         "colorMode": "none",
@@ -298,7 +296,6 @@
         "x": 6,
         "y": 0
       },
-      "id": 43,
       "maxDataPoints": 100,
       "options": {
         "colorMode": "none",
@@ -375,7 +372,6 @@
         "x": 9,
         "y": 0
       },
-      "id": 44,
       "maxDataPoints": 100,
       "options": {
         "colorMode": "none",
@@ -419,7 +415,6 @@
         "x": 12,
         "y": 0
       },
-      "id": 37,
       "options": {
         "code": {
           "language": "plaintext",
@@ -454,7 +449,6 @@
         "x": 0,
         "y": 4
       },
-      "id": 4,
       "panels": [],
       "repeat": "Site",
       "targets": [
@@ -512,7 +506,6 @@
         "x": 0,
         "y": 5
       },
-      "id": 40,
       "maxDataPoints": 100,
       "options": {
         "colorMode": "none",
@@ -572,7 +565,6 @@
         "y": 5
       },
       "hiddenSeries": false,
-      "id": 38,
       "legend": {
         "alignAsTable": true,
         "avg": false,
@@ -767,7 +759,6 @@
         "x": 0,
         "y": 8
       },
-      "id": 32,
       "options": {
         "orientation": "horizontal",
         "reduceOptions": {
@@ -843,7 +834,6 @@
         "x": 3,
         "y": 8
       },
-      "id": 33,
       "options": {
         "orientation": "horizontal",
         "reduceOptions": {
@@ -896,7 +886,6 @@
         "y": 16
       },
       "hiddenSeries": false,
-      "id": 15,
       "legend": {
         "alignAsTable": true,
         "avg": false,
@@ -1006,7 +995,6 @@
         "y": 24
       },
       "hiddenSeries": false,
-      "id": 2,
       "legend": {
         "alignAsTable": true,
         "avg": false,
@@ -1139,7 +1127,6 @@
         "y": 31
       },
       "hiddenSeries": false,
-      "id": 39,
       "legend": {
         "alignAsTable": true,
         "avg": false,
@@ -1247,7 +1234,6 @@
         "y": 38
       },
       "hiddenSeries": false,
-      "id": 45,
       "legend": {
         "alignAsTable": true,
         "avg": true,
@@ -1488,8 +1474,6 @@
   "timezone": "browser",
   "title": "UniFi-Poller: Network Sites - Prometheus (11311) [TF]",
   "weekStart": "",
-  "id": 4,
   "uid": "9WaGWZaZk",
-  "style": "dark",
-  "version": 3
+  "style": "dark"
 }

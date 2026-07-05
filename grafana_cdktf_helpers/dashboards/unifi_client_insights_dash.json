@@ -118,7 +118,6 @@
         "x": 0,
         "y": 0
       },
-      "id": 21,
       "scroll": true,
       "showHeader": true,
       "sort": {
@@ -631,7 +630,6 @@
         "y": 13
       },
       "hideTimeOverride": false,
-      "id": 22,
       "scroll": true,
       "showHeader": true,
       "sort": {
@@ -1046,7 +1044,6 @@
         "y": 25
       },
       "hideTimeOverride": false,
-      "id": 9,
       "legend": {
         "header": "",
         "percentage": true,
@@ -1143,7 +1140,6 @@
         "y": 25
       },
       "hideTimeOverride": false,
-      "id": 11,
       "legend": {
         "header": "",
         "percentage": true,
@@ -1230,7 +1226,6 @@
         "y": 25
       },
       "hideTimeOverride": false,
-      "id": 12,
       "legend": {
         "header": "Count",
         "percentage": true,
@@ -1321,7 +1316,6 @@
         "y": 35
       },
       "hiddenSeries": false,
-      "id": 3,
       "legend": {
         "alignAsTable": true,
         "avg": true,
@@ -1439,7 +1433,6 @@
         "y": 49
       },
       "hiddenSeries": false,
-      "id": 2,
       "legend": {
         "alignAsTable": true,
         "avg": true,
@@ -1557,7 +1550,6 @@
         "y": 66
       },
       "hiddenSeries": false,
-      "id": 23,
       "legend": {
         "alignAsTable": true,
         "avg": true,
@@ -1703,7 +1695,6 @@
         "y": 66
       },
       "hiddenSeries": false,
-      "id": 15,
       "legend": {
         "alignAsTable": true,
         "avg": true,
@@ -1850,7 +1841,6 @@
         "y": 77
       },
       "hiddenSeries": false,
-      "id": 7,
       "legend": {
         "alignAsTable": true,
         "avg": false,
@@ -1952,7 +1942,6 @@
         "y": 77
       },
       "hiddenSeries": false,
-      "id": 10,
       "legend": {
         "alignAsTable": true,
         "avg": false,
@@ -2056,7 +2045,6 @@
         "y": 86
       },
       "hiddenSeries": false,
-      "id": 6,
       "legend": {
         "alignAsTable": true,
         "avg": false,
@@ -2158,7 +2146,6 @@
         "y": 86
       },
       "hiddenSeries": false,
-      "id": 19,
       "legend": {
         "alignAsTable": true,
         "avg": true,
@@ -2256,7 +2243,6 @@
         "y": 94
       },
       "hiddenSeries": false,
-      "id": 24,
       "legend": {
         "alignAsTable": true,
         "avg": false,
@@ -2358,7 +2344,6 @@
         "y": 94
       },
       "hiddenSeries": false,
-      "id": 26,
       "legend": {
         "alignAsTable": true,
         "avg": true,
@@ -2459,7 +2444,6 @@
         "y": 102
       },
       "hiddenSeries": false,
-      "id": 30,
       "legend": {
         "alignAsTable": true,
         "avg": false,
@@ -2560,7 +2544,6 @@
         "y": 102
       },
       "hiddenSeries": false,
-      "id": 29,
       "legend": {
         "alignAsTable": true,
         "avg": false,
@@ -2661,7 +2644,6 @@
         "y": 110
       },
       "hiddenSeries": false,
-      "id": 25,
       "legend": {
         "alignAsTable": true,
         "avg": false,
@@ -2763,7 +2745,6 @@
         "y": 110
       },
       "hiddenSeries": false,
-      "id": 31,
       "legend": {
         "alignAsTable": true,
         "avg": false,
@@ -2867,7 +2848,6 @@
         "y": 118
       },
       "hiddenSeries": false,
-      "id": 28,
       "legend": {
         "alignAsTable": true,
         "avg": false,
@@ -2968,7 +2948,6 @@
         "y": 118
       },
       "hiddenSeries": false,
-      "id": 27,
       "legend": {
         "alignAsTable": true,
         "avg": false,
@@ -3313,8 +3292,6 @@
   "timezone": "browser",
   "title": "UniFi-Poller: Client Insights - Prometheus (11315) [TF]",
   "weekStart": "",
-  "id": 3,
   "uid": "jMfvAjxWz",
-  "style": "dark",
-  "version": 5
+  "style": "dark"
 }
