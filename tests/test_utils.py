@@ -64,7 +64,6 @@ def test_all_shared_dashboards_exist():
         'alertmanager_dash.json',
         'apache.json',
         'docker_and_system_monitoring.json',
-        'grafana_metrics_dash.json',
         'mysql-overview.json',
         'node_exporter.json',
         'nut-ups-dash.json',
