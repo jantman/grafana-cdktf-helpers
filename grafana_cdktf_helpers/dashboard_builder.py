@@ -248,7 +248,11 @@ class Row:
                 "y": self.grid_pos.y if self.grid_pos else 0
             },
             "id": self.id,
-            "panels": [panel.to_dict() if self.collapsed else {} for panel in self.panels],
+            # Grafana nests panels inside a row's `panels` array only when the row
+            # is collapsed; for an expanded row the array must be empty (the panels
+            # live at the dashboard top level). Emitting `{}` stubs here rendered as
+            # phantom "No data" panels under Grafana 12/13's new dashboard engine.
+            "panels": [panel.to_dict() for panel in self.panels] if self.collapsed else [],
             "title": self.title,
             "type": "row"
         }

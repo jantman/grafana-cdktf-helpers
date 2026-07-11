@@ -224,8 +224,10 @@ class TestRow:
         assert d["title"] == "Expanded Row"
         assert d["type"] == "row"
         assert d["id"] == 1
-        # Expanded rows emit empty dicts for panel slots
-        assert d["panels"] == [{}]
+        # Expanded rows must emit an empty panels array; the real panels live at
+        # the dashboard top level. Emitting `{}` stubs rendered as phantom
+        # "No data" panels under Grafana 12/13's new dashboard engine.
+        assert d["panels"] == []
 
     def test_to_dict_collapsed(self):
         r = Row("Collapsed Row", collapsed=True)
