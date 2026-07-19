@@ -126,8 +126,12 @@ class Hosts:
             MetricMinThresholdRule(
                 stack,
                 name='Filesystem Free Space [TF]',
-                expr='(node_filesystem_free_bytes{fstype!="nfs4"} / '
-                     'node_filesystem_size_bytes{fstype!="nfs4"}) * 100',
+                # tmpfs excluded (2026-07): tmpfs is RAM-backed, so its "free
+                # space" is memory pressure (already covered by the RAM/Swap
+                # alerts), not disk. A kiosk's tmpfs /tmp briefly dipping under
+                # the 10% threshold was the sole source of this alert's flapping.
+                expr='(node_filesystem_free_bytes{fstype!~"nfs4|tmpfs"} / '
+                     'node_filesystem_size_bytes{fstype!~"nfs4|tmpfs"}) * 100',
                 threshold=10, for_='5m', skip_expr_checks=True,
                 annotations={
                     "__dashboardUid__": node.uid,
