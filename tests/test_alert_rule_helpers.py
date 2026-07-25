@@ -129,6 +129,22 @@ class TestLokiCountAlertRule:
         a = _data_models_by_ref_id()['A']
         assert a['expr'] == 'count_over_time({x="y"} [10m])'
 
+    def test_no_aggregation_by_default(self, stack):
+        LokiCountAlertRule(
+            stack=stack, name='n', logql='{x="y"}', annotations={},
+            range_='5m',
+        ).rule
+        a = _data_models_by_ref_id()['A']
+        assert a['expr'] == 'count_over_time({x="y"} [5m])'
+
+    def test_aggregation_wraps_query(self, stack):
+        LokiCountAlertRule(
+            stack=stack, name='n', logql='{x="y"}', annotations={},
+            range_='5m', aggregation='sum',
+        ).rule
+        a = _data_models_by_ref_id()['A']
+        assert a['expr'] == 'sum(count_over_time({x="y"} [5m]))'
+
     def test_reduce_stage_uses_max(self, stack):
         LokiCountAlertRule(
             stack=stack, name='n', logql='{x="y"}', annotations={},

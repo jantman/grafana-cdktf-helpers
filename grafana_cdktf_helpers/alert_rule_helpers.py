@@ -894,6 +894,14 @@ class LokiCountAlertRule:
     The consumer must set ``stack.loki`` to a ``DataGrafanaDataSource`` before
     instantiating this class. Loki is not assumed to be present on every
     consuming stack, so it is not auto-created by ``BaseStack``.
+
+    By default the query is ``count_over_time(<logql> [<range_>])``, which
+    yields one series per matching log stream (i.e. per distinct label set,
+    such as ``filename``). That produces a *multi-dimensional* alert — one
+    firing instance per stream — which can flood notifications when many
+    streams match at once. Set ``aggregation`` (e.g. ``'sum'``) to wrap the
+    query as ``sum(count_over_time(<logql> [<range_>]))`` and collapse it to a
+    single host-wide series / single alert instance.
     """
 
     def __init__(
@@ -903,7 +911,7 @@ class LokiCountAlertRule:
         threshold: float = 0, threshold_type: str = 'gt',
         from_: int = 600, no_data_state: str = 'OK',
         extra_labels: Optional[Dict[str, str]] = None,
-        interval_ms: int = 1000,
+        interval_ms: int = 1000, aggregation: Optional[str] = None,
     ):
         self.stack: 'BaseStack' = stack
         self.name: str = name
@@ -917,6 +925,7 @@ class LokiCountAlertRule:
         self.from_: int = from_
         self.no_data_state: str = no_data_state
         self.interval_ms: int = interval_ms
+        self.aggregation: Optional[str] = aggregation
         self.extra_labels: Dict[str, str] = {}
         self.labels: Dict[str, str] = {'Severity': self.severity}
         if extra_labels:
@@ -930,6 +939,8 @@ class LokiCountAlertRule:
             return self._rule
         loki_uid = self.stack.loki.uid
         expr = f'count_over_time({self.logql} [{self.range_}])'
+        if self.aggregation:
+            expr = f'{self.aggregation}({expr})'
         modelA = {
             "datasource": {"type": "loki", "uid": loki_uid},
             "editorMode": "code",
