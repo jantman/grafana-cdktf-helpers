@@ -475,304 +475,6 @@
       "x": 0,
       "y": 77
     },
-    "id": 48,
-    "panels": [],
-    "title": "zm_detect - Token Management",
-    "type": "row"
-  },
-  {
-    "datasource": {
-      "type": "prometheus",
-      "uid": "${prom_uid}"
-    },
-    "description": "Rate of token events (found vs not found)",
-    "fieldConfig": {
-      "defaults": {
-        "color": {
-          "mode": "palette-classic"
-        },
-        "custom": {
-          "axisCenteredZero": false,
-          "axisColorMode": "text",
-          "axisLabel": "",
-          "axisPlacement": "auto",
-          "barAlignment": 0,
-          "drawStyle": "line",
-          "fillOpacity": 10,
-          "gradientMode": "none",
-          "hideFrom": {
-            "legend": false,
-            "tooltip": false,
-            "viz": false
-          },
-          "lineInterpolation": "linear",
-          "lineWidth": 1,
-          "pointSize": 5,
-          "scaleDistribution": {
-            "type": "linear"
-          },
-          "showPoints": "auto",
-          "spanNulls": false,
-          "stacking": {
-            "group": "A",
-            "mode": "none"
-          },
-          "thresholdsStyle": {
-            "mode": "off"
-          }
-        },
-        "mappings": [],
-        "thresholds": {
-          "mode": "absolute",
-          "steps": [
-            {
-              "color": "green",
-              "value": null
-            }
-          ]
-        },
-        "unit": "short"
-      },
-      "overrides": []
-    },
-    "gridPos": {
-      "h": 8,
-      "w": 12,
-      "x": 0,
-      "y": 78
-    },
-    "id": 49,
-    "options": {
-      "legend": {
-        "calcs": [],
-        "displayMode": "list",
-        "placement": "bottom",
-        "showLegend": true
-      },
-      "tooltip": {
-        "mode": "single",
-        "sort": "none"
-      }
-    },
-    "targets": [
-      {
-        "datasource": {
-          "type": "prometheus",
-          "uid": "${prom_uid}"
-        },
-        "editorMode": "code",
-        "expr": "increase(zm_detect_token_found[5m])",
-        "instant": false,
-        "legendFormat": "Token Found",
-        "range": true,
-        "refId": "A"
-      },
-      {
-        "datasource": {
-          "type": "prometheus",
-          "uid": "${prom_uid}"
-        },
-        "editorMode": "code",
-        "expr": "increase(zm_detect_no_token[5m])",
-        "instant": false,
-        "legendFormat": "No Token",
-        "range": true,
-        "refId": "B"
-      }
-    ],
-    "title": "Token Found/Not Found Rate",
-    "type": "timeseries"
-  },
-  {
-    "datasource": {
-      "type": "prometheus",
-      "uid": "${prom_uid}"
-    },
-    "description": "Token retrieval attempts by status",
-    "fieldConfig": {
-      "defaults": {
-        "color": {
-          "mode": "palette-classic"
-        },
-        "custom": {
-          "axisCenteredZero": false,
-          "axisColorMode": "text",
-          "axisLabel": "",
-          "axisPlacement": "auto",
-          "barAlignment": 0,
-          "drawStyle": "line",
-          "fillOpacity": 10,
-          "gradientMode": "none",
-          "hideFrom": {
-            "legend": false,
-            "tooltip": false,
-            "viz": false
-          },
-          "lineInterpolation": "linear",
-          "lineWidth": 1,
-          "pointSize": 5,
-          "scaleDistribution": {
-            "type": "linear"
-          },
-          "showPoints": "auto",
-          "spanNulls": false,
-          "stacking": {
-            "group": "A",
-            "mode": "none"
-          },
-          "thresholdsStyle": {
-            "mode": "off"
-          }
-        },
-        "mappings": [],
-        "thresholds": {
-          "mode": "absolute",
-          "steps": [
-            {
-              "color": "green",
-              "value": null
-            }
-          ]
-        },
-        "unit": "short"
-      },
-      "overrides": []
-    },
-    "gridPos": {
-      "h": 8,
-      "w": 12,
-      "x": 12,
-      "y": 78
-    },
-    "id": 50,
-    "options": {
-      "legend": {
-        "calcs": [],
-        "displayMode": "list",
-        "placement": "bottom",
-        "showLegend": true
-      },
-      "tooltip": {
-        "mode": "single",
-        "sort": "none"
-      }
-    },
-    "targets": [
-      {
-        "datasource": {
-          "type": "prometheus",
-          "uid": "${prom_uid}"
-        },
-        "editorMode": "code",
-        "expr": "increase(zm_detect_token_count[5m])",
-        "instant": false,
-        "legendFormat": "{{status}}",
-        "range": true,
-        "refId": "A"
-      }
-    ],
-    "title": "Token Retrieval Attempts",
-    "type": "timeseries"
-  },
-  {
-    "datasource": {
-      "type": "prometheus",
-      "uid": "${prom_uid}"
-    },
-    "description": "Time to retrieve new ML API token by status",
-    "fieldConfig": {
-      "defaults": {
-        "color": {
-          "mode": "palette-classic"
-        },
-        "custom": {
-          "axisCenteredZero": false,
-          "axisColorMode": "text",
-          "axisLabel": "",
-          "axisPlacement": "auto",
-          "barAlignment": 0,
-          "drawStyle": "line",
-          "fillOpacity": 10,
-          "gradientMode": "none",
-          "hideFrom": {
-            "legend": false,
-            "tooltip": false,
-            "viz": false
-          },
-          "lineInterpolation": "linear",
-          "lineWidth": 1,
-          "pointSize": 5,
-          "scaleDistribution": {
-            "type": "linear"
-          },
-          "showPoints": "auto",
-          "spanNulls": false,
-          "stacking": {
-            "group": "A",
-            "mode": "none"
-          },
-          "thresholdsStyle": {
-            "mode": "off"
-          }
-        },
-        "mappings": [],
-        "thresholds": {
-          "mode": "absolute",
-          "steps": [
-            {
-              "color": "green",
-              "value": null
-            }
-          ]
-        },
-        "unit": "ms"
-      },
-      "overrides": []
-    },
-    "gridPos": {
-      "h": 8,
-      "w": 12,
-      "x": 0,
-      "y": 86
-    },
-    "id": 51,
-    "options": {
-      "legend": {
-        "calcs": [],
-        "displayMode": "list",
-        "placement": "bottom",
-        "showLegend": true
-      },
-      "tooltip": {
-        "mode": "single",
-        "sort": "none"
-      }
-    },
-    "targets": [
-      {
-        "datasource": {
-          "type": "prometheus",
-          "uid": "${prom_uid}"
-        },
-        "editorMode": "code",
-        "expr": "zm_detect_token_time",
-        "instant": false,
-        "legendFormat": "{{status}} {{quantile}}th Percentile",
-        "range": true,
-        "refId": "A"
-      }
-    ],
-    "title": "Token Retrieval Time",
-    "type": "timeseries"
-  },
-  {
-    "collapsed": false,
-    "gridPos": {
-      "h": 1,
-      "w": 24,
-      "x": 0,
-      "y": 94
-    },
     "id": 52,
     "panels": [],
     "title": "zm_detect - ML API Communication",
@@ -783,7 +485,7 @@
       "type": "prometheus",
       "uid": "${prom_uid}"
     },
-    "description": "ML API POST requests by status code",
+    "description": "Inference gateway call outcomes. Renamed at the ES 7 cutover: the hook now emits ml_post_status.success/.failure as distinct metric names, not a status label on one metric.",
     "fieldConfig": {
       "defaults": {
         "color": {
@@ -837,7 +539,7 @@
       "h": 8,
       "w": 12,
       "x": 0,
-      "y": 95
+      "y": 78
     },
     "id": 53,
     "options": {
@@ -859,14 +561,26 @@
           "uid": "${prom_uid}"
         },
         "editorMode": "code",
-        "expr": "increase(zm_detect_ml_post_status[5m])",
+        "expr": "increase(zm_detect_ml_post_status_success[5m])",
         "instant": false,
-        "legendFormat": "{{status_code}}",
+        "legendFormat": "Success",
         "range": true,
         "refId": "A"
+      },
+      {
+        "datasource": {
+          "type": "prometheus",
+          "uid": "${prom_uid}"
+        },
+        "editorMode": "code",
+        "expr": "increase(zm_detect_ml_post_status_failure[5m])",
+        "instant": false,
+        "legendFormat": "Failure",
+        "range": true,
+        "refId": "B"
       }
     ],
-    "title": "ML API POST Status",
+    "title": "ML Gateway POST Status",
     "type": "timeseries"
   },
   {
@@ -928,7 +642,7 @@
       "h": 8,
       "w": 12,
       "x": 12,
-      "y": 95
+      "y": 78
     },
     "id": 54,
     "options": {
@@ -966,7 +680,7 @@
       "h": 1,
       "w": 24,
       "x": 0,
-      "y": 103
+      "y": 86
     },
     "id": 55,
     "panels": [],
@@ -978,7 +692,7 @@
       "type": "prometheus",
       "uid": "${prom_uid}"
     },
-    "description": "Image write attempts to ZoneMinder by status",
+    "description": "objdetect image writes by outcome.",
     "fieldConfig": {
       "defaults": {
         "color": {
@@ -1032,7 +746,7 @@
       "h": 8,
       "w": 12,
       "x": 0,
-      "y": 104
+      "y": 87
     },
     "id": 56,
     "options": {
@@ -1054,11 +768,23 @@
           "uid": "${prom_uid}"
         },
         "editorMode": "code",
-        "expr": "increase(zm_detect_image_write[5m])",
+        "expr": "increase(zm_detect_image_write_success[5m])",
         "instant": false,
-        "legendFormat": "{{status}}",
+        "legendFormat": "Success",
         "range": true,
         "refId": "A"
+      },
+      {
+        "datasource": {
+          "type": "prometheus",
+          "uid": "${prom_uid}"
+        },
+        "editorMode": "code",
+        "expr": "increase(zm_detect_image_write_failure[5m])",
+        "instant": false,
+        "legendFormat": "Failure",
+        "range": true,
+        "refId": "B"
       }
     ],
     "title": "Image Write Attempts",
@@ -1123,7 +849,7 @@
       "h": 8,
       "w": 12,
       "x": 12,
-      "y": 104
+      "y": 87
     },
     "id": 57,
     "options": {
@@ -1161,7 +887,7 @@
       "h": 1,
       "w": 24,
       "x": 0,
-      "y": 112
+      "y": 95
     },
     "id": 58,
     "panels": [],
@@ -1227,7 +953,7 @@
       "h": 8,
       "w": 12,
       "x": 0,
-      "y": 113
+      "y": 96
     },
     "id": 59,
     "options": {
@@ -1318,7 +1044,7 @@
       "h": 8,
       "w": 12,
       "x": 12,
-      "y": 113
+      "y": 96
     },
     "id": 60,
     "options": {
@@ -1355,7 +1081,7 @@
       "type": "prometheus",
       "uid": "${prom_uid}"
     },
-    "description": "ML gateway failures and fallback to local detection",
+    "description": "Detections returned by the gateway versus those surviving the 38 nuisance filters. Replaces a panel that queried zm_detect_ml_gateway_failure and _fallback, neither of which has ever existed in this Prometheus.",
     "fieldConfig": {
       "defaults": {
         "color": {
@@ -1409,7 +1135,7 @@
       "h": 8,
       "w": 12,
       "x": 0,
-      "y": 121
+      "y": 104
     },
     "id": 61,
     "options": {
@@ -1431,9 +1157,9 @@
           "uid": "${prom_uid}"
         },
         "editorMode": "code",
-        "expr": "increase(zm_detect_ml_gateway_failure[5m])",
+        "expr": "increase(zm_detect_detections_before_filter[5m])",
         "instant": false,
-        "legendFormat": "Gateway Failures",
+        "legendFormat": "Before Filter",
         "range": true,
         "refId": "A"
       },
@@ -1443,14 +1169,14 @@
           "uid": "${prom_uid}"
         },
         "editorMode": "code",
-        "expr": "increase(zm_detect_ml_gateway_fallback[5m])",
+        "expr": "increase(zm_detect_detections_after_filter[5m])",
         "instant": false,
-        "legendFormat": "Fallback to Local",
+        "legendFormat": "After Filter",
         "range": true,
         "refId": "B"
       }
     ],
-    "title": "ML Gateway Failures & Fallbacks",
+    "title": "Detections Before/After Nuisance Filter",
     "type": "timeseries"
   },
   {
@@ -1459,7 +1185,7 @@
       "h": 1,
       "w": 24,
       "x": 0,
-      "y": 129
+      "y": 112
     },
     "id": 62,
     "panels": [],
@@ -1525,7 +1251,7 @@
       "h": 8,
       "w": 12,
       "x": 0,
-      "y": 130
+      "y": 113
     },
     "id": 63,
     "options": {
@@ -1616,7 +1342,7 @@
       "h": 8,
       "w": 12,
       "x": 12,
-      "y": 130
+      "y": 113
     },
     "id": 64,
     "options": {
@@ -1707,7 +1433,7 @@
       "h": 8,
       "w": 8,
       "x": 0,
-      "y": 138
+      "y": 121
     },
     "id": 65,
     "options": {
@@ -1798,7 +1524,7 @@
       "h": 8,
       "w": 8,
       "x": 8,
-      "y": 138
+      "y": 121
     },
     "id": 66,
     "options": {
@@ -1835,7 +1561,7 @@
       "type": "prometheus",
       "uid": "${prom_uid}"
     },
-    "description": "Time to update event notes in ZoneMinder",
+    "description": "objdetect.gif writes by outcome. Replaces a panel that queried zm_detect_main_handler_notes_duration, which has never existed.",
     "fieldConfig": {
       "defaults": {
         "color": {
@@ -1889,7 +1615,7 @@
       "h": 8,
       "w": 8,
       "x": 16,
-      "y": 138
+      "y": 121
     },
     "id": 67,
     "options": {
@@ -1911,14 +1637,26 @@
           "uid": "${prom_uid}"
         },
         "editorMode": "code",
-        "expr": "zm_detect_main_handler_notes_duration",
+        "expr": "increase(zm_detect_animation_result_success[5m])",
         "instant": false,
-        "legendFormat": "Notes Update",
+        "legendFormat": "Success",
         "range": true,
         "refId": "A"
+      },
+      {
+        "datasource": {
+          "type": "prometheus",
+          "uid": "${prom_uid}"
+        },
+        "editorMode": "code",
+        "expr": "increase(zm_detect_animation_result_failure[5m])",
+        "instant": false,
+        "legendFormat": "Failure",
+        "range": true,
+        "refId": "B"
       }
     ],
-    "title": "Event Notes Update Duration",
+    "title": "Animation Result",
     "type": "timeseries"
   },
   {
@@ -1980,7 +1718,7 @@
       "h": 8,
       "w": 12,
       "x": 0,
-      "y": 146
+      "y": 129
     },
     "id": 68,
     "options": {
@@ -2018,7 +1756,7 @@
       "h": 1,
       "w": 24,
       "x": 0,
-      "y": 154
+      "y": 137
     },
     "id": 69,
     "panels": [],
@@ -2030,7 +1768,7 @@
       "type": "prometheus",
       "uid": "${prom_uid}"
     },
-    "description": "Main handler completion by status",
+    "description": "Detection hook outcomes per run.",
     "fieldConfig": {
       "defaults": {
         "color": {
@@ -2084,7 +1822,7 @@
       "h": 8,
       "w": 8,
       "x": 0,
-      "y": 155
+      "y": 138
     },
     "id": 70,
     "options": {
@@ -2106,11 +1844,35 @@
           "uid": "${prom_uid}"
         },
         "editorMode": "code",
-        "expr": "increase(zm_detect_main_result[5m])",
+        "expr": "increase(zm_detect_main_result_success[5m])",
         "instant": false,
-        "legendFormat": "{{status}}",
+        "legendFormat": "Success",
         "range": true,
         "refId": "A"
+      },
+      {
+        "datasource": {
+          "type": "prometheus",
+          "uid": "${prom_uid}"
+        },
+        "editorMode": "code",
+        "expr": "increase(zm_detect_main_result_no_detections[5m])",
+        "instant": false,
+        "legendFormat": "No Detections",
+        "range": true,
+        "refId": "B"
+      },
+      {
+        "datasource": {
+          "type": "prometheus",
+          "uid": "${prom_uid}"
+        },
+        "editorMode": "code",
+        "expr": "increase(zm_detect_main_result_error[5m])",
+        "instant": false,
+        "legendFormat": "Error",
+        "range": true,
+        "refId": "C"
       }
     ],
     "title": "Main Handler Results",
@@ -2175,7 +1937,7 @@
       "h": 8,
       "w": 8,
       "x": 8,
-      "y": 155
+      "y": 138
     },
     "id": 71,
     "options": {
@@ -2266,7 +2028,7 @@
       "h": 8,
       "w": 8,
       "x": 16,
-      "y": 155
+      "y": 138
     },
     "id": 72,
     "options": {
@@ -2296,6 +2058,340 @@
       }
     ],
     "title": "Total Script Duration",
+    "type": "timeseries"
+  },
+  {
+    "collapsed": false,
+    "gridPos": {
+      "h": 1,
+      "w": 24,
+      "x": 0,
+      "y": 146
+    },
+    "id": 73,
+    "panels": [],
+    "title": "pyzm.serve Gateway & Notifications",
+    "type": "row"
+  },
+  {
+    "datasource": {
+      "type": "prometheus",
+      "uid": "${prom_uid}"
+    },
+    "description": "pyzm_serve_model_degraded is 1 when the model is running on a processor other than the one requested -- docker-pyzm-serve issue #1, where a transient CUDA fault pins inference to CPU permanently and silently. The series disappears when the gateway is unreachable; see the Up panel.",
+    "fieldConfig": {
+      "defaults": {
+        "color": {
+          "mode": "palette-classic"
+        },
+        "custom": {
+          "axisCenteredZero": false,
+          "axisColorMode": "text",
+          "axisLabel": "",
+          "axisPlacement": "auto",
+          "barAlignment": 0,
+          "drawStyle": "line",
+          "fillOpacity": 10,
+          "gradientMode": "none",
+          "hideFrom": {
+            "legend": false,
+            "tooltip": false,
+            "viz": false
+          },
+          "lineInterpolation": "linear",
+          "lineWidth": 1,
+          "pointSize": 5,
+          "scaleDistribution": {
+            "type": "linear"
+          },
+          "showPoints": "auto",
+          "spanNulls": false,
+          "stacking": {
+            "group": "A",
+            "mode": "none"
+          },
+          "thresholdsStyle": {
+            "mode": "off"
+          }
+        },
+        "mappings": [],
+        "thresholds": {
+          "mode": "absolute",
+          "steps": [
+            {
+              "color": "green",
+              "value": null
+            }
+          ]
+        },
+        "unit": "short"
+      },
+      "overrides": []
+    },
+    "gridPos": {
+      "h": 8,
+      "w": 8,
+      "x": 0,
+      "y": 147
+    },
+    "id": 74,
+    "options": {
+      "legend": {
+        "calcs": [],
+        "displayMode": "list",
+        "placement": "bottom",
+        "showLegend": true
+      },
+      "tooltip": {
+        "mode": "single",
+        "sort": "none"
+      }
+    },
+    "targets": [
+      {
+        "datasource": {
+          "type": "prometheus",
+          "uid": "${prom_uid}"
+        },
+        "editorMode": "code",
+        "expr": "pyzm_serve_model_degraded",
+        "instant": false,
+        "legendFormat": "{{model}} degraded",
+        "range": true,
+        "refId": "A"
+      }
+    ],
+    "title": "Gateway Processor Degraded",
+    "type": "timeseries"
+  },
+  {
+    "datasource": {
+      "type": "prometheus",
+      "uid": "${prom_uid}"
+    },
+    "description": "Whether the /models scrape succeeded. Written every minute by prometheus-node-exporter-pyzm-serve.timer on bigserver.",
+    "fieldConfig": {
+      "defaults": {
+        "color": {
+          "mode": "palette-classic"
+        },
+        "custom": {
+          "axisCenteredZero": false,
+          "axisColorMode": "text",
+          "axisLabel": "",
+          "axisPlacement": "auto",
+          "barAlignment": 0,
+          "drawStyle": "line",
+          "fillOpacity": 10,
+          "gradientMode": "none",
+          "hideFrom": {
+            "legend": false,
+            "tooltip": false,
+            "viz": false
+          },
+          "lineInterpolation": "linear",
+          "lineWidth": 1,
+          "pointSize": 5,
+          "scaleDistribution": {
+            "type": "linear"
+          },
+          "showPoints": "auto",
+          "spanNulls": false,
+          "stacking": {
+            "group": "A",
+            "mode": "none"
+          },
+          "thresholdsStyle": {
+            "mode": "off"
+          }
+        },
+        "mappings": [],
+        "thresholds": {
+          "mode": "absolute",
+          "steps": [
+            {
+              "color": "green",
+              "value": null
+            }
+          ]
+        },
+        "unit": "short"
+      },
+      "overrides": []
+    },
+    "gridPos": {
+      "h": 8,
+      "w": 8,
+      "x": 8,
+      "y": 147
+    },
+    "id": 75,
+    "options": {
+      "legend": {
+        "calcs": [],
+        "displayMode": "list",
+        "placement": "bottom",
+        "showLegend": true
+      },
+      "tooltip": {
+        "mode": "single",
+        "sort": "none"
+      }
+    },
+    "targets": [
+      {
+        "datasource": {
+          "type": "prometheus",
+          "uid": "${prom_uid}"
+        },
+        "editorMode": "code",
+        "expr": "pyzm_serve_up",
+        "instant": false,
+        "legendFormat": "up",
+        "range": true,
+        "refId": "A"
+      },
+      {
+        "datasource": {
+          "type": "prometheus",
+          "uid": "${prom_uid}"
+        },
+        "editorMode": "code",
+        "expr": "time() - pyzm_serve_scrape_timestamp_seconds",
+        "instant": false,
+        "legendFormat": "scrape age (s)",
+        "range": true,
+        "refId": "B"
+      }
+    ],
+    "title": "Gateway Up",
+    "type": "timeseries"
+  },
+  {
+    "datasource": {
+      "type": "prometheus",
+      "uid": "${prom_uid}"
+    },
+    "description": "Outcome of every pushapi_pushover.py invocation. `invoked` is emitted before any work that can fail, so a gap between it and the results means the plugin is dying mid-flight.",
+    "fieldConfig": {
+      "defaults": {
+        "color": {
+          "mode": "palette-classic"
+        },
+        "custom": {
+          "axisCenteredZero": false,
+          "axisColorMode": "text",
+          "axisLabel": "",
+          "axisPlacement": "auto",
+          "barAlignment": 0,
+          "drawStyle": "line",
+          "fillOpacity": 10,
+          "gradientMode": "none",
+          "hideFrom": {
+            "legend": false,
+            "tooltip": false,
+            "viz": false
+          },
+          "lineInterpolation": "linear",
+          "lineWidth": 1,
+          "pointSize": 5,
+          "scaleDistribution": {
+            "type": "linear"
+          },
+          "showPoints": "auto",
+          "spanNulls": false,
+          "stacking": {
+            "group": "A",
+            "mode": "none"
+          },
+          "thresholdsStyle": {
+            "mode": "off"
+          }
+        },
+        "mappings": [],
+        "thresholds": {
+          "mode": "absolute",
+          "steps": [
+            {
+              "color": "green",
+              "value": null
+            }
+          ]
+        },
+        "unit": "short"
+      },
+      "overrides": []
+    },
+    "gridPos": {
+      "h": 8,
+      "w": 8,
+      "x": 16,
+      "y": 147
+    },
+    "id": 76,
+    "options": {
+      "legend": {
+        "calcs": [],
+        "displayMode": "list",
+        "placement": "bottom",
+        "showLegend": true
+      },
+      "tooltip": {
+        "mode": "single",
+        "sort": "none"
+      }
+    },
+    "targets": [
+      {
+        "datasource": {
+          "type": "prometheus",
+          "uid": "${prom_uid}"
+        },
+        "editorMode": "code",
+        "expr": "increase(zm_push_invoked[5m])",
+        "instant": false,
+        "legendFormat": "Invoked",
+        "range": true,
+        "refId": "A"
+      },
+      {
+        "datasource": {
+          "type": "prometheus",
+          "uid": "${prom_uid}"
+        },
+        "editorMode": "code",
+        "expr": "increase(zm_push_result_success[5m])",
+        "instant": false,
+        "legendFormat": "Success",
+        "range": true,
+        "refId": "B"
+      },
+      {
+        "datasource": {
+          "type": "prometheus",
+          "uid": "${prom_uid}"
+        },
+        "editorMode": "code",
+        "expr": "increase(zm_push_result_failure[5m])",
+        "instant": false,
+        "legendFormat": "Failure",
+        "range": true,
+        "refId": "C"
+      },
+      {
+        "datasource": {
+          "type": "prometheus",
+          "uid": "${prom_uid}"
+        },
+        "editorMode": "code",
+        "expr": "increase(zm_push_result_silenced[5m])",
+        "instant": false,
+        "legendFormat": "Silenced",
+        "range": true,
+        "refId": "D"
+      }
+    ],
+    "title": "Pushover Notification Results",
     "type": "timeseries"
   }
 ]
