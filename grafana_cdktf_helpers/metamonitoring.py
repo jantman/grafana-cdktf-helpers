@@ -73,7 +73,7 @@ class MetaMonitoring:
 
         am = _load_dash('alertmanager_dash.json')
         amdash: Dashboard = Dashboard(
-            stack, 'alertmanager-dash', folder=self.folder.id, config_json=am
+            stack, 'alertmanager-dash', folder=self.folder.uid, config_json=am
         )
         # NOTE: the "Grafana metrics" dashboard is intentionally not managed here.
         # Grafana 13's built-in Prometheus data-source plugin owns/serves this
@@ -82,12 +82,12 @@ class MetaMonitoring:
         # own it. (grafana_metrics_dash.json removed.)
         prom_over = _load_dash('prometheus_overview_dash.json')
         overview: Dashboard = Dashboard(
-            stack, 'prom-overview-dash', folder=self.folder.id,
+            stack, 'prom-overview-dash', folder=self.folder.uid,
             config_json=prom_over
         )
         prom_stats = _load_dash('prometheus_stats_dash.json')
         Dashboard(
-            stack, 'prom-stats-dash', folder=self.folder.id,
+            stack, 'prom-stats-dash', folder=self.folder.uid,
             config_json=prom_stats
         )
 

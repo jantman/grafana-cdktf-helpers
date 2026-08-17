@@ -66,23 +66,23 @@ class Hosts:
         self.folder: Folder = folder
 
         Dashboard(
-            stack, 'hosts-docker-dash', folder=folder.id,
+            stack, 'hosts-docker-dash', folder=folder.uid,
             config_json=_load_dash('docker_and_system_monitoring.json')
         )
         node: Dashboard = Dashboard(
-            stack, 'node-exporter-dash', folder=folder.id,
+            stack, 'node-exporter-dash', folder=folder.uid,
             config_json=_load_dash('node_exporter.json')
         )
         systemd_dash: Dashboard = Dashboard(
-            stack, 'systemd-service-dash', folder=folder.id,
+            stack, 'systemd-service-dash', folder=folder.uid,
             config_json=_load_dash('systemd_service_dashboard.json')
         )
         Dashboard(
-            stack, 'mysql-overview-dash', folder=folder.id,
+            stack, 'mysql-overview-dash', folder=folder.uid,
             config_json=_load_dash('mysql-overview.json')
         )
         Dashboard(
-            stack, 'apache-status-dash', folder=folder.id,
+            stack, 'apache-status-dash', folder=folder.uid,
             config_json=_load_dash('apache.json')
         )
 
