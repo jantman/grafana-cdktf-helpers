@@ -25,7 +25,7 @@ class NutUps:
 
     def __init__(
         self, stack: 'BaseStack', upsname: str, folder_id: str, folder_uid: str,
-        runtime_minutes: int, has_output_voltage: bool = True,
+        runtime_minutes: float, has_output_voltage: bool = True,
         battery_voltage: int = 24, load_threshold: int = 75,
         add_rules: bool = True,
         status_no_data_state: str = 'NoData',

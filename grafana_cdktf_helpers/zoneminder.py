@@ -19,6 +19,14 @@ class ZoneMinder:
     This is the shared base class. Consuming projects create a folder,
     dashboard, and then instantiate ZoneMinder with the dashboard UID
     for annotation links.
+
+    The opt-in ZMES websocket alert defaults to ``max`` over a 5-minute
+    window, which makes a *single* slow response own the alert for the whole
+    window and then clear -- a flapping shape, not a sustained-slowness one.
+    The ``zmes_websocket_*`` parameters exist to retune that per site: set
+    ``zmes_websocket_aggregation='mean'`` with a longer ``zmes_websocket_from``
+    to alert on sustained latency instead of on isolated spikes. Defaults are
+    unchanged from before those parameters existed.
     """
 
     def __init__(
@@ -27,6 +35,10 @@ class ZoneMinder:
         dashboard_uid: str,
         ignore_monitor_names: Optional[list[str]] = None,
         enable_zmes_websocket_alerts: bool = False,
+        zmes_websocket_threshold: float = 0.5,
+        zmes_websocket_aggregation: str = 'max',
+        zmes_websocket_from: int = 300,
+        zmes_websocket_for: str = '1m',
         enable_audio_alerts: bool = False,
         exporter_query_time_threshold: int = 5,
         capture_fps_threshold: int = 8,
@@ -220,20 +232,44 @@ class ZoneMinder:
 
         # === Opt-in rules ===
         if enable_zmes_websocket_alerts:
-            rules.append(
-                MetricMaxThresholdRule(
-                    stack,
-                    name='ZMES Websocket Response Time',
-                    expr='max_over_time(zm_zmes_websocket_response_time_seconds{status="Success"}[1m])',
-                    threshold=0.5, from_=300,
-                    annotations={
-                        "__dashboardUid__": dashboard_uid,
-                        "__panelId__": "2",
-                        "summary": "ZMES Websocket response time is high",
-                        "description": "ZMES websocket maximum response time was {{ printf \"%.2f\" $values.B.Value }} seconds in the last 5 minutes",
-                    },
-                ).rule,
+            if zmes_websocket_aggregation not in ('max', 'mean'):
+                raise ValueError(
+                    "zmes_websocket_aggregation must be 'max' or 'mean', not "
+                    f"{zmes_websocket_aggregation!r}"
+                )
+            ws_mean = zmes_websocket_aggregation == 'mean'
+            ws_over_time = 'avg_over_time' if ws_mean else 'max_over_time'
+            # 'maximum', not 'max', so the default rule's annotation text is
+            # byte-identical to what it was before this was parameterized --
+            # otherwise every existing consumer gets a cosmetic Terraform diff.
+            ws_word = 'mean' if ws_mean else 'maximum'
+            ws_window_min = zmes_websocket_from // 60
+            ws_kwargs = dict(
+                name='ZMES Websocket Response Time',
+                expr=(
+                    f'{ws_over_time}('
+                    'zm_zmes_websocket_response_time_seconds{status="Success"}'
+                    '[1m])'
+                ),
+                threshold=zmes_websocket_threshold,
+                from_=zmes_websocket_from, for_=zmes_websocket_for,
+                annotations={
+                    "__dashboardUid__": dashboard_uid,
+                    "__panelId__": "2",
+                    "summary": "ZMES Websocket response time is high",
+                    "description":
+                        f"ZMES websocket {ws_word} response"
+                        ' time was {{ printf "%.2f" $values.B.Value }} seconds'
+                        f' in the last {ws_window_min} minutes',
+                },
             )
+            if ws_mean:
+                ws_rule = MetricMeanThresholdRule(
+                    stack, threshold_type='gt', **ws_kwargs
+                )
+            else:
+                ws_rule = MetricMaxThresholdRule(stack, **ws_kwargs)
+            rules.append(ws_rule.rule)
         if enable_audio_alerts:
             rules.extend([
                 MetricMinThresholdRule(
