@@ -126,6 +126,7 @@
         "x": 0,
         "y": 0
       },
+      "id": 36,
       "panels": [],
       "targets": [
         {
@@ -183,6 +184,7 @@
         "x": 0,
         "y": 1
       },
+      "id": 4,
       "maxDataPoints": 100,
       "options": {
         "colorMode": "none",
@@ -227,6 +229,7 @@
         "x": 3,
         "y": 1
       },
+      "id": 26,
       "scroll": true,
       "showHeader": true,
       "sort": {
@@ -423,6 +426,7 @@
         "x": 12,
         "y": 1
       },
+      "id": 207,
       "maxDataPoints": 100,
       "options": {
         "colorMode": "none",
@@ -497,6 +501,7 @@
         "x": 15,
         "y": 1
       },
+      "id": 2,
       "maxDataPoints": 100,
       "options": {
         "colorMode": "none",
@@ -571,6 +576,7 @@
         "x": 18,
         "y": 1
       },
+      "id": 3,
       "maxDataPoints": 100,
       "options": {
         "colorMode": "none",
@@ -645,6 +651,7 @@
         "x": 21,
         "y": 1
       },
+      "id": 121,
       "maxDataPoints": 100,
       "options": {
         "colorMode": "none",
@@ -687,6 +694,7 @@
         "x": 0,
         "y": 6
       },
+      "id": 113,
       "panels": [],
       "targets": [
         {
@@ -783,6 +791,7 @@
         "x": 0,
         "y": 7
       },
+      "id": 118,
       "options": {
         "legend": {
           "calcs": [
@@ -888,6 +897,7 @@
         "x": 0,
         "y": 17
       },
+      "id": 315,
       "options": {
         "legend": {
           "calcs": [
@@ -941,6 +951,7 @@
         "y": 22
       },
       "hiddenSeries": false,
+      "id": 115,
       "legend": {
         "alignAsTable": true,
         "avg": true,
@@ -1047,6 +1058,7 @@
         "x": 0,
         "y": 34
       },
+      "id": 18,
       "panels": [
         {
           "aliasColors": {},
@@ -1067,6 +1079,7 @@
             "y": 19
           },
           "hiddenSeries": false,
+          "id": 6,
           "legend": {
             "avg": false,
             "current": false,
@@ -1163,6 +1176,7 @@
             "y": 24
           },
           "hiddenSeries": false,
+          "id": 8,
           "legend": {
             "avg": false,
             "current": false,
@@ -1267,6 +1281,7 @@
         "x": 0,
         "y": 35
       },
+      "id": 34,
       "panels": [
         {
           "aliasColors": {},
@@ -1287,6 +1302,7 @@
             "y": 30
           },
           "hiddenSeries": false,
+          "id": 57,
           "legend": {
             "avg": false,
             "current": false,
@@ -1380,6 +1396,7 @@
             "y": 34
           },
           "hiddenSeries": false,
+          "id": 38,
           "legend": {
             "avg": false,
             "current": false,
@@ -1483,6 +1500,7 @@
             "y": 38
           },
           "hiddenSeries": false,
+          "id": 75,
           "legend": {
             "avg": false,
             "current": false,
@@ -1586,6 +1604,7 @@
             "y": 44
           },
           "hiddenSeries": false,
+          "id": 68,
           "legend": {
             "avg": false,
             "current": false,
@@ -1689,6 +1708,7 @@
             "y": 50
           },
           "hiddenSeries": false,
+          "id": 48,
           "legend": {
             "avg": false,
             "current": false,
@@ -1799,6 +1819,7 @@
             "y": 56
           },
           "hiddenSeries": false,
+          "id": 53,
           "legend": {
             "avg": false,
             "current": false,
@@ -1909,6 +1930,7 @@
             "y": 62
           },
           "hiddenSeries": false,
+          "id": 62,
           "legend": {
             "avg": false,
             "current": false,
@@ -2017,6 +2039,7 @@
         "x": 0,
         "y": 36
       },
+      "id": 284,
       "panels": [
         {
           "aliasColors": {},
@@ -2036,6 +2059,7 @@
             "y": 31
           },
           "hiddenSeries": false,
+          "id": 314,
           "legend": {
             "avg": false,
             "current": false,
@@ -2154,6 +2178,7 @@
             "y": 37
           },
           "hiddenSeries": false,
+          "id": 307,
           "legend": {
             "avg": false,
             "current": false,
@@ -2247,6 +2272,7 @@
             "y": 43
           },
           "hiddenSeries": false,
+          "id": 303,
           "legend": {
             "avg": false,
             "current": false,
@@ -2357,6 +2383,7 @@
         "x": 0,
         "y": 37
       },
+      "id": 84,
       "panels": [
         {
           "aliasColors": {},
@@ -2376,6 +2403,7 @@
             "y": 32
           },
           "hiddenSeries": false,
+          "id": 94,
           "legend": {
             "avg": false,
             "current": false,
@@ -2478,6 +2506,7 @@
             "y": 38
           },
           "hiddenSeries": false,
+          "id": 106,
           "legend": {
             "avg": false,
             "current": false,
@@ -2570,6 +2599,7 @@
             "y": 44
           },
           "hiddenSeries": false,
+          "id": 97,
           "legend": {
             "avg": false,
             "current": false,
@@ -2662,6 +2692,7 @@
             "y": 50
           },
           "hiddenSeries": false,
+          "id": 101,
           "legend": {
             "avg": false,
             "current": false,
@@ -2755,6 +2786,7 @@
             "y": 56
           },
           "hiddenSeries": false,
+          "id": 92,
           "legend": {
             "avg": false,
             "current": false,
@@ -2854,6 +2886,7 @@
         "x": 0,
         "y": 38
       },
+      "id": 123,
       "panels": [
         {
           "aliasColors": {},
@@ -2873,6 +2906,7 @@
             "y": 33
           },
           "hiddenSeries": false,
+          "id": 129,
           "legend": {
             "avg": false,
             "current": false,
@@ -2966,6 +3000,7 @@
             "y": 39
           },
           "hiddenSeries": false,
+          "id": 134,
           "legend": {
             "avg": false,
             "current": false,
@@ -3069,6 +3104,7 @@
             "y": 45
           },
           "hiddenSeries": false,
+          "id": 138,
           "legend": {
             "avg": false,
             "current": false,
@@ -3162,6 +3198,7 @@
             "y": 51
           },
           "hiddenSeries": false,
+          "id": 149,
           "legend": {
             "avg": false,
             "current": false,
@@ -3255,6 +3292,7 @@
             "y": 57
           },
           "hiddenSeries": false,
+          "id": 143,
           "legend": {
             "avg": false,
             "current": false,
@@ -3348,6 +3386,7 @@
             "y": 63
           },
           "hiddenSeries": false,
+          "id": 131,
           "legend": {
             "avg": false,
             "current": false,
@@ -3448,6 +3487,7 @@
         "x": 0,
         "y": 39
       },
+      "id": 173,
       "panels": [
         {
           "aliasColors": {},
@@ -3468,6 +3508,7 @@
             "y": 70
           },
           "hiddenSeries": false,
+          "id": 175,
           "legend": {
             "avg": false,
             "current": false,
@@ -3604,6 +3645,7 @@
             "y": 77
           },
           "hiddenSeries": false,
+          "id": 177,
           "legend": {
             "avg": false,
             "current": false,

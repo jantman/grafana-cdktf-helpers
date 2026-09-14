@@ -73,6 +73,14 @@ def test_import_utils():
     assert callable(get_shared_dashboard_path)
 
 
+def test_import_panel_links():
+    from grafana_cdktf_helpers.panel_links import (
+        DashboardResendNonce, check_live, check_synth, iter_panels,
+    )
+    for obj in (DashboardResendNonce, check_live, check_synth, iter_panels):
+        assert callable(obj)
+
+
 def test_import_dashboard_builder():
     from grafana_cdktf_helpers.dashboard_builder import (
         GridPosition,

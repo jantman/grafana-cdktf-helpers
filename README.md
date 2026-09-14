@@ -16,6 +16,7 @@ This package provides reusable Python classes for defining Grafana alert rules, 
 - **`stack`** — `BaseStack` class providing common CDKTF stack setup (Grafana provider, Prometheus data source, version checks).
 - **`dashboard_builder`** — Pythonic dashboard builder with type-safe dataclasses (`Dashboard`, `TimeseriesPanel`, `Row`, `Target`, `FieldConfig`, etc.) and factory functions for common Home Assistant sensor panels (temperature, humidity, radon).
 - **`utils`** — Dashboard loading utilities with placeholder substitution.
+- **`panel_links`** — Keeps alert-rule panel links (`__dashboardUid__` / `__panelId__`) pointing at real panels. `check_synth` and `check_live` (also `python -m grafana_cdktf_helpers.panel_links synth|live`) find broken links before and after a deploy. `DashboardResendNonce` is a CDKTF aspect that forces every dashboard to be re-sent in full. That is the repair when an update that changed only a dashboard's folder or message has made the Terraform grafana provider drop the panel ids. See the module docstring.
 - **`dashboards/`** — 17 bundled Grafana dashboard JSON files.
 
 ## Installation
