@@ -75,20 +75,16 @@ class MetaMonitoring:
         amdash: Dashboard = Dashboard(
             stack, 'alertmanager-dash', folder=self.folder.uid, config_json=am
         )
-        # NOTE: the "Grafana metrics" dashboard is intentionally not managed here.
-        # Grafana 13's built-in Prometheus data-source plugin owns/serves this
-        # dashboard (uid marked managedBy=plugin), which makes it read-only to the
-        # Terraform provider ("Cannot save provisioned dashboard"). Let the plugin
-        # own it. (grafana_metrics_dash.json removed.)
+        # NOTE: the "Grafana metrics" and "Prometheus 2.0 Stats" dashboards are
+        # intentionally not managed here. Grafana 13's built-in Prometheus
+        # data-source plugin owns/serves both (uid marked managedBy=plugin), which
+        # makes them read-only to the Terraform provider ("Cannot save provisioned
+        # dashboard"). Let the plugin own them. (grafana_metrics_dash.json and
+        # prometheus_stats_dash.json removed.)
         prom_over = _load_dash('prometheus_overview_dash.json')
         overview: Dashboard = Dashboard(
             stack, 'prom-overview-dash', folder=self.folder.uid,
             config_json=prom_over
-        )
-        prom_stats = _load_dash('prometheus_stats_dash.json')
-        Dashboard(
-            stack, 'prom-stats-dash', folder=self.folder.uid,
-            config_json=prom_stats
         )
 
         # Common RuleGroup kwargs

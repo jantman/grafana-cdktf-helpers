@@ -69,7 +69,6 @@ def test_all_shared_dashboards_exist():
         'nut-ups-dash.json',
         'ping.json',
         'prometheus_overview_dash.json',
-        'prometheus_stats_dash.json',
         'systemd_service_dashboard.json',
         'unifi_client_dpi_dash.json',
         'unifi_client_insights_dash.json',
