@@ -130,8 +130,22 @@ class Hosts:
                 # space" is memory pressure (already covered by the RAM/Swap
                 # alerts), not disk. A kiosk's tmpfs /tmp briefly dipping under
                 # the 10% threshold was the sole source of this alert's flapping.
-                expr='(node_filesystem_free_bytes{fstype!~"nfs4|tmpfs"} / '
-                     'node_filesystem_size_bytes{fstype!~"nfs4|tmpfs"}) * 100',
+                #
+                # avail_bytes, not free_bytes (2026-09-16). free_bytes counts
+                # ext4's root-reserved blocks, which nothing but root can
+                # actually use, so on a default 5%-reserve filesystem this
+                # rule read about 5 points higher than the space anyone has.
+                # phoenix /home reported ~10% while 4.2% was genuinely
+                # available. avail_bytes is what df shows and what a process
+                # hitting ENOSPC cares about.
+                #
+                # nas1:9100 excluded, matching the inode rule below: it
+                # exports exactly one non-tmpfs mount, / on /dev/md0, which is
+                # the same storage that `NAS1 Volume Space Used [TF]` already
+                # alerts on from the Synology API. Before this, volume1
+                # crossing 90% raised both at identical timestamps.
+                expr='(node_filesystem_avail_bytes{fstype!~"nfs4|tmpfs", instance!="nas1:9100"} / '
+                     'node_filesystem_size_bytes{fstype!~"nfs4|tmpfs", instance!="nas1:9100"}) * 100',
                 threshold=10, for_='5m', skip_expr_checks=True,
                 annotations={
                     "__dashboardUid__": node.uid,
