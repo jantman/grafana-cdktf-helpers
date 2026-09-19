@@ -383,28 +383,66 @@ class XYChartPanel(Panel):
 
     Field selection is explicit: ``mapping`` is set to ``"manual"`` because
     under Grafana's ``"auto"`` default the panel picks fields itself and the
-    matchers below are never consulted.
+    series config below is never consulted.
+
+    **The series config is written in the schemaVersion 38 shape** -- plain
+    field names, a numeric ``frame`` index and ``pointColor`` -- because that
+    is the version :class:`Dashboard` declares. Grafana migrates a dashboard
+    forward from its declared version on every load, rebuilding each
+    ``options.series[]`` entry and wrapping each value into
+    ``{"matcher": {"id": ..., "options": <value>}}``.
+
+    Emitting the *modern*, already-wrapped matcher form therefore gets it
+    wrapped a second time, and a double-wrapped matcher resolves to no field:
+    the panel renders **"No data"** and its field pickers read
+    ``[object Object] (not found)``, while the query, the transformations and
+    the data are all perfectly fine. Versions 0.15.0 and 0.15.1 did exactly
+    that, so no XY chart they produced ever rendered.
+
+    Two smaller traps live here too:
+
+    * **A series with no ``frame`` plots nothing.** Under manual mapping the
+      series resolves its frame through this key; omitting it is sufficient on
+      its own to produce an empty panel.
+    * **The colour mapping is dropped unless it is called ``pointColor``.**
+      Migration rebuilds from x, y and frame only, so a modern ``color`` key
+      vanishes whatever its form.
+
+    Verified against Grafana 13.1.0. If :class:`Dashboard` ever declares a
+    schema version new enough that Grafana stops migrating, this shape has to
+    change with it -- so the two belong together.
     """
+
+    #: Applied when ``color_field`` is set but no ``color_mode`` is given.
+    #: A colour *field* with Grafana's ``palette-classic`` default is
+    #: meaningless -- that palette assigns one colour per series rather than
+    #: per value, so every point renders identically and the dimension the
+    #: caller asked for silently does not exist.
+    DEFAULT_COLOR_MODE = "continuous-GrYlRd"
 
     def __init__(self, title: str, targets: List[Target],
                  x_field: str, y_field: str,
                  color_field: Optional[str] = None,
+                 color_mode: Optional[str] = None,
                  point_size: int = 5,
                  x_axis_label: str = "",
                  y_axis_label: str = "",
                  unit: str = "short",
                  show_legend: bool = False,
+                 frame_index: int = 0,
                  **kwargs):
         super().__init__(title, "xychart", **kwargs)
         self.targets = targets
         self.x_field = x_field
         self.y_field = y_field
         self.color_field = color_field
+        self.color_mode = color_mode
         self.point_size = point_size
         self.x_axis_label = x_axis_label
         self.y_axis_label = y_axis_label
         self.unit = unit
         self.show_legend = show_legend
+        self.frame_index = frame_index
 
         _assign_ref_ids(self.targets)
 
@@ -412,14 +450,15 @@ class XYChartPanel(Panel):
         """Convert to Grafana JSON format."""
         panel_dict = super().to_dict()
 
+        # schemaVersion 38 shape -- see the class docstring for why this is
+        # not the modern matcher form.
         series: Dict[str, Any] = {
-            "x": {"matcher": {"id": "byName", "options": self.x_field}},
-            "y": {"matcher": {"id": "byName", "options": self.y_field}}
+            "x": self.x_field,
+            "y": self.y_field,
+            "frame": self.frame_index,
         }
         if self.color_field is not None:
-            series["color"] = {
-                "matcher": {"id": "byName", "options": self.color_field}
-            }
+            series["pointColor"] = {"field": self.color_field}
 
         # The panel-wide axisLabel belongs to the y axis. An x axis label has
         # to be an override on the x field itself -- Grafana has no second
@@ -433,6 +472,13 @@ class XYChartPanel(Panel):
                     {"id": "custom.axisLabel", "value": self.x_axis_label}
                 ]
             })
+
+        # The series config says *which* field carries colour; the palette
+        # comes from here, and without it Grafana falls back to
+        # palette-classic and colours per series rather than per value.
+        color_mode = self.color_mode
+        if color_mode is None and self.color_field is not None:
+            color_mode = self.DEFAULT_COLOR_MODE
 
         panel_dict["fieldConfig"] = {
             "defaults": {
@@ -456,6 +502,10 @@ class XYChartPanel(Panel):
             },
             "overrides": overrides
         }
+        if color_mode is not None:
+            panel_dict["fieldConfig"]["defaults"]["color"] = {
+                "mode": color_mode
+            }
         panel_dict["options"] = {
             "mapping": "manual",
             "series": [series],

@@ -847,29 +847,84 @@ class TestXYChartPanel:
         assert d["type"] == "xychart"
         assert d["options"]["mapping"] == "manual"
 
-    def test_field_matchers(self):
+    def test_fields_are_plain_names_not_matchers(self):
+        """The schemaVersion 38 shape, which is what Dashboard declares.
+
+        Grafana migrates a dashboard forward from its declared version on
+        every load and wraps each of these into a matcher. Emitting the
+        already-wrapped modern form gets it wrapped twice, and a
+        double-wrapped matcher resolves to no field -- the panel renders
+        "No data" with the query, transformations and data all fine. That is
+        what 0.15.0 and 0.15.1 shipped.
+        """
         panel = XYChartPanel("Scatter", [LokiTarget(expr='{job="x"}')],
                              x_field="time", y_field="distance",
                              datasource_uid=DS_UID)
         series = panel.to_dict()["options"]["series"]
         assert len(series) == 1
-        assert series[0]["x"] == {"matcher": {"id": "byName",
-                                              "options": "time"}}
-        assert series[0]["y"] == {"matcher": {"id": "byName",
-                                              "options": "distance"}}
+        assert series[0]["x"] == "time"
+        assert series[0]["y"] == "distance"
+        assert "matcher" not in json.dumps(series[0])
 
-    def test_no_color_matcher_when_color_field_unset(self):
+    def test_frame_index_is_always_emitted(self):
+        """A series with no frame resolves no frame, and plots nothing."""
         panel = XYChartPanel("Scatter", [LokiTarget(expr='{job="x"}')],
                              x_field="time", y_field="distance",
                              datasource_uid=DS_UID)
-        assert "color" not in panel.to_dict()["options"]["series"][0]
+        assert panel.to_dict()["options"]["series"][0]["frame"] == 0
 
-    def test_color_matcher_when_color_field_set(self):
+    def test_frame_index_is_configurable(self):
+        panel = XYChartPanel("Scatter", [LokiTarget(expr='{job="x"}')],
+                             x_field="time", y_field="distance",
+                             frame_index=2, datasource_uid=DS_UID)
+        assert panel.to_dict()["options"]["series"][0]["frame"] == 2
+
+    def test_no_point_color_when_color_field_unset(self):
+        panel = XYChartPanel("Scatter", [LokiTarget(expr='{job="x"}')],
+                             x_field="time", y_field="distance",
+                             datasource_uid=DS_UID)
+        d = panel.to_dict()
+        assert "pointColor" not in d["options"]["series"][0]
+        # No colour field means no reason to override Grafana's palette.
+        assert "color" not in d["fieldConfig"]["defaults"]
+
+    def test_point_color_when_color_field_set(self):
+        """'pointColor', not 'color'.
+
+        Migration rebuilds the series from x, y and frame only, so a modern
+        'color' key is dropped outright whatever its form.
+        """
         panel = XYChartPanel("Scatter", [LokiTarget(expr='{job="x"}')],
                              x_field="time", y_field="distance",
                              color_field="energy", datasource_uid=DS_UID)
-        assert panel.to_dict()["options"]["series"][0]["color"] == {
-            "matcher": {"id": "byName", "options": "energy"}
+        series = panel.to_dict()["options"]["series"][0]
+        assert series["pointColor"] == {"field": "energy"}
+        assert "color" not in series
+
+    def test_color_field_implies_a_continuous_palette(self):
+        """palette-classic colours per series, so every point would match."""
+        panel = XYChartPanel("Scatter", [LokiTarget(expr='{job="x"}')],
+                             x_field="time", y_field="distance",
+                             color_field="energy", datasource_uid=DS_UID)
+        assert panel.to_dict()["fieldConfig"]["defaults"]["color"] == {
+            "mode": "continuous-GrYlRd"
+        }
+
+    def test_color_mode_is_overridable(self):
+        panel = XYChartPanel("Scatter", [LokiTarget(expr='{job="x"}')],
+                             x_field="time", y_field="distance",
+                             color_field="energy", color_mode="continuous-BlPu",
+                             datasource_uid=DS_UID)
+        assert panel.to_dict()["fieldConfig"]["defaults"]["color"] == {
+            "mode": "continuous-BlPu"
+        }
+
+    def test_color_mode_without_color_field(self):
+        panel = XYChartPanel("Scatter", [LokiTarget(expr='{job="x"}')],
+                             x_field="time", y_field="distance",
+                             color_mode="continuous-BlPu", datasource_uid=DS_UID)
+        assert panel.to_dict()["fieldConfig"]["defaults"]["color"] == {
+            "mode": "continuous-BlPu"
         }
 
     def test_point_size_lives_in_field_config_not_options(self):
