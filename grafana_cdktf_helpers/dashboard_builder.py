@@ -40,19 +40,36 @@ class Override:
 
 @dataclass
 class Target:
-    """Prometheus query target for a panel."""
+    """Query target for a panel, Prometheus unless told otherwise."""
     expr: str
     legend_format: str = "{{friendly_name}}"
     ref_id: str = "A"
     interval: str = ""
     hide: bool = False
     instant: bool = False
+    datasource_type: str = "prometheus"
+    # "heatmap", "table", "time_series"... Omitted from the emitted JSON
+    # entirely when None: hundreds of existing targets do not carry the key,
+    # and adding it to all of them would churn every dashboard's JSON.
+    format: Optional[str] = None
 
-    def to_dict(self, datasource_uid: str) -> Dict[str, Any]:
+    def resolve_datasource_type(self, panel_type: Optional[str] = None) -> str:
+        """Pick the datasource type to emit.
+
+        A target that states its own type keeps it; otherwise it inherits the
+        panel's. This is what lets a plain ``Target`` sit on a Loki panel
+        without having to repeat the type on every query.
+        """
+        if self.datasource_type != "prometheus":
+            return self.datasource_type
+        return panel_type or "prometheus"
+
+    def to_dict(self, datasource_uid: str,
+                datasource_type: Optional[str] = None) -> Dict[str, Any]:
         """Convert to Grafana JSON format."""
-        return {
+        target_dict = {
             "datasource": {
-                "type": "prometheus",
+                "type": self.resolve_datasource_type(datasource_type),
                 "uid": datasource_uid
             },
             "editorMode": "code",
@@ -64,6 +81,32 @@ class Target:
             "hide": self.hide,
             "interval": self.interval
         }
+        if self.format is not None:
+            target_dict["format"] = self.format
+        return target_dict
+
+
+@dataclass
+class LokiTarget(Target):
+    """LogQL query target against a Loki datasource.
+
+    ``legend_format`` defaults to empty rather than the Prometheus-shaped
+    ``{{friendly_name}}``: a log stream carries no such label, so the default
+    would render as literal text.
+    """
+    legend_format: str = ""
+    datasource_type: str = "loki"
+    query_type: str = "range"
+    max_lines: Optional[int] = None
+
+    def to_dict(self, datasource_uid: str,
+                datasource_type: Optional[str] = None) -> Dict[str, Any]:
+        """Convert to Grafana JSON format."""
+        target_dict = super().to_dict(datasource_uid, datasource_type)
+        target_dict["queryType"] = self.query_type
+        if self.max_lines is not None:
+            target_dict["maxLines"] = self.max_lines
+        return target_dict
 
 
 @dataclass
@@ -145,6 +188,18 @@ class FieldConfig:
         }
 
 
+def _assign_ref_ids(targets: List[Target]) -> None:
+    """Give each target after the first a distinct refId.
+
+    A target that set its own refId keeps it; only ones still carrying the
+    ``"A"`` default are renamed.
+    """
+    ref_ids = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+    for i, target in enumerate(targets):
+        if target.ref_id == "A" and i > 0:  # Default wasn't changed
+            target.ref_id = ref_ids[i]
+
+
 class Panel:
     """Base class for all panel types."""
 
@@ -152,11 +207,17 @@ class Panel:
                  grid_pos: Optional[GridPosition] = None,
                  datasource_uid: Optional[str] = None,
                  description: str = "",
-                 fixed_id: Optional[int] = None):
+                 fixed_id: Optional[int] = None,
+                 datasource_type: Optional[str] = None,
+                 transformations: Optional[List[Dict[str, Any]]] = None):
         self.title = title
         self.type = panel_type
         self.grid_pos = grid_pos or GridPosition()
         self.datasource_uid = datasource_uid
+        # Left None so Dashboard can tell "unset" from a deliberate
+        # "prometheus" and fill only the former.
+        self.datasource_type = datasource_type
+        self.transformations = transformations
         self.description = description
         self.targets: List[Target] = []
         self.id: Optional[int] = None
@@ -167,7 +228,7 @@ class Panel:
         """Convert panel to Grafana JSON format."""
         panel_dict = {
             "datasource": {
-                "type": "prometheus",
+                "type": self.datasource_type or "prometheus",
                 "uid": self.datasource_uid
             },
             "description": self.description,
@@ -180,8 +241,18 @@ class Panel:
             "id": self.id,
             "title": self.title,
             "type": self.type,
-            "targets": [target.to_dict(self.datasource_uid) for target in self.targets]
+            "targets": [
+                target.to_dict(self.datasource_uid, self.datasource_type)
+                for target in self.targets
+            ]
         }
+        # Emitted only when there is something to emit. An always-present
+        # "transformations": [] would change the JSON of every existing panel,
+        # which both drowns out the real diff when a consuming project checks a
+        # library upgrade and forces the provider to re-send every dashboard --
+        # and a full re-send is what strips the panel ids alert links use.
+        if self.transformations:
+            panel_dict["transformations"] = self.transformations
         return panel_dict
 
 
@@ -197,11 +268,7 @@ class TimeseriesPanel(Panel):
         self.field_config = field_config or FieldConfig()
         self.legend_calcs = legend_calcs or []
 
-        # Auto-assign ref_ids if not set
-        ref_ids = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-        for i, target in enumerate(self.targets):
-            if target.ref_id == "A" and i > 0:  # Default wasn't changed
-                target.ref_id = ref_ids[i]
+        _assign_ref_ids(self.targets)
 
     def to_dict(self) -> Dict[str, Any]:
         """Convert to Grafana JSON format."""
@@ -218,6 +285,218 @@ class TimeseriesPanel(Panel):
                 "mode": "single",
                 "sort": "none"
             }
+        }
+        return panel_dict
+
+
+class HeatmapPanel(Panel):
+    """Heatmap panel for data that is already bucketed.
+
+    Option names follow Grafana's heatmap panel schema. Pair this with a
+    ``Target`` carrying ``format="heatmap"`` so the datasource returns bucket
+    series rather than plain time series.
+    """
+
+    def __init__(self, title: str, targets: List[Target],
+                 unit: str = "short",
+                 color_scheme: str = "Oranges",
+                 color_mode: str = "scheme",
+                 color_steps: int = 64,
+                 cell_gap: int = 1,
+                 y_axis_label: str = "",
+                 legend_show: bool = True,
+                 tooltip_mode: str = "single",
+                 show_color_scale: bool = False,
+                 **kwargs):
+        super().__init__(title, "heatmap", **kwargs)
+        self.targets = targets
+        self.unit = unit
+        self.color_scheme = color_scheme
+        self.color_mode = color_mode
+        self.color_steps = color_steps
+        self.cell_gap = cell_gap
+        self.y_axis_label = y_axis_label
+        self.legend_show = legend_show
+        self.tooltip_mode = tooltip_mode
+        self.show_color_scale = show_color_scale
+
+        _assign_ref_ids(self.targets)
+
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert to Grafana JSON format."""
+        panel_dict = super().to_dict()
+        panel_dict["fieldConfig"] = {
+            "defaults": {
+                "custom": {
+                    "hideFrom": {
+                        "legend": False,
+                        "tooltip": False,
+                        "viz": False
+                    },
+                    "scaleDistribution": {"type": "linear"}
+                }
+            },
+            "overrides": []
+        }
+        panel_dict["options"] = {
+            # Forced off, and stated explicitly even though it matches
+            # Grafana's own default: the series arrive already bucketed from a
+            # histogram, so letting Grafana bucket them again would silently
+            # produce a wrong picture. An explicit False also survives someone
+            # editing the panel in the UI and re-exporting it.
+            "calculate": False,
+            "calculation": {},
+            "cellGap": self.cell_gap,
+            "color": {
+                "mode": self.color_mode,
+                "scheme": self.color_scheme,
+                "fill": "dark-orange",
+                "scale": "exponential",
+                "exponent": 0.5,
+                "steps": self.color_steps,
+                "reverse": False
+            },
+            "exemplars": {"color": "rgba(255,0,255,0.7)"},
+            "filterValues": {"le": 1e-9},
+            "legend": {"show": self.legend_show},
+            "rowsFrame": {"layout": "auto"},
+            "showValue": "never",
+            "tooltip": {
+                "mode": self.tooltip_mode,
+                "yHistogram": False,
+                "showColorScale": self.show_color_scale
+            },
+            "yAxis": {
+                "axisPlacement": "left",
+                "reverse": False,
+                "unit": self.unit,
+                "axisLabel": self.y_axis_label
+            }
+        }
+        return panel_dict
+
+
+class XYChartPanel(Panel):
+    """Scatter (XY) panel plotting one named field against another.
+
+    Field selection is explicit: ``mapping`` is set to ``"manual"`` because
+    under Grafana's ``"auto"`` default the panel picks fields itself and the
+    matchers below are never consulted.
+    """
+
+    def __init__(self, title: str, targets: List[Target],
+                 x_field: str, y_field: str,
+                 color_field: Optional[str] = None,
+                 point_size: int = 5,
+                 x_axis_label: str = "",
+                 y_axis_label: str = "",
+                 unit: str = "short",
+                 show_legend: bool = False,
+                 **kwargs):
+        super().__init__(title, "xychart", **kwargs)
+        self.targets = targets
+        self.x_field = x_field
+        self.y_field = y_field
+        self.color_field = color_field
+        self.point_size = point_size
+        self.x_axis_label = x_axis_label
+        self.y_axis_label = y_axis_label
+        self.unit = unit
+        self.show_legend = show_legend
+
+        _assign_ref_ids(self.targets)
+
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert to Grafana JSON format."""
+        panel_dict = super().to_dict()
+
+        series: Dict[str, Any] = {
+            "x": {"matcher": {"id": "byName", "options": self.x_field}},
+            "y": {"matcher": {"id": "byName", "options": self.y_field}}
+        }
+        if self.color_field is not None:
+            series["color"] = {
+                "matcher": {"id": "byName", "options": self.color_field}
+            }
+
+        panel_dict["fieldConfig"] = {
+            "defaults": {
+                "custom": {
+                    "show": "points",
+                    # Grafana reads point size from fieldConfig, not from
+                    # options -- it is silently ignored there.
+                    "pointSize": {"fixed": self.point_size},
+                    "pointShape": "circle",
+                    "pointStrokeWidth": 1,
+                    "axisPlacement": "auto",
+                    "axisLabel": self.y_axis_label,
+                    "hideFrom": {
+                        "legend": False,
+                        "tooltip": False,
+                        "viz": False
+                    },
+                    "scaleDistribution": {"type": "linear"}
+                },
+                "unit": self.unit
+            },
+            "overrides": []
+        }
+        panel_dict["options"] = {
+            "mapping": "manual",
+            "series": [series],
+            "legend": {
+                "calcs": [],
+                "displayMode": "list",
+                "placement": "bottom",
+                "showLegend": self.show_legend
+            },
+            "tooltip": {
+                "mode": "single",
+                "sort": "none"
+            }
+        }
+        return panel_dict
+
+
+class LogsPanel(Panel):
+    """Logs panel rendering raw log lines.
+
+    All nine options Grafana's schema marks non-optional are always emitted;
+    the five that nobody here needs to vary are constants rather than
+    parameters.
+    """
+
+    def __init__(self, title: str, targets: List[Target],
+                 show_time: bool = True,
+                 wrap_log_message: bool = True,
+                 sort_order: str = "Descending",
+                 enable_log_details: bool = True,
+                 show_labels: bool = False,
+                 **kwargs):
+        super().__init__(title, "logs", **kwargs)
+        self.targets = targets
+        self.show_time = show_time
+        self.wrap_log_message = wrap_log_message
+        self.sort_order = sort_order
+        self.enable_log_details = enable_log_details
+        self.show_labels = show_labels
+
+        _assign_ref_ids(self.targets)
+
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert to Grafana JSON format."""
+        panel_dict = super().to_dict()
+        panel_dict["fieldConfig"] = {"defaults": {}, "overrides": []}
+        panel_dict["options"] = {
+            "dedupStrategy": "none",
+            "enableLogDetails": self.enable_log_details,
+            "prettifyLogMessage": False,
+            "showCommonLabels": False,
+            "showLabels": self.show_labels,
+            "showLogContextToggle": False,
+            "showTime": self.show_time,
+            "sortOrder": self.sort_order,
+            "wrapLogMessage": self.wrap_log_message
         }
         return panel_dict
 
@@ -306,9 +585,11 @@ class Dashboard:
                  description: str = "", uid: Optional[str] = None,
                  dashboard_id: Optional[int] = None,
                  version: int = 1, schema_version: int = 38,
-                 annotation_tags: Optional[List[str]] = None):
+                 annotation_tags: Optional[List[str]] = None,
+                 datasource_type: str = "prometheus"):
         self.title = title
         self.datasource_uid = datasource_uid
+        self.datasource_type = datasource_type
         self.description = description
         self.uid = uid
         self.dashboard_id = dashboard_id
@@ -358,10 +639,14 @@ class Dashboard:
             if panel.fixed_id is not None:
                 used_fixed_ids.add(panel.fixed_id)
 
-        # Propagate datasource_uid to panels that don't have one set
+        # Propagate datasource_uid and datasource_type to panels that don't
+        # have one set. A panel that named its own keeps it -- that is how a
+        # single Loki panel sits on an otherwise Prometheus dashboard.
         for panel in all_panels:
             if panel.datasource_uid is None:
                 panel.datasource_uid = self.datasource_uid
+            if panel.datasource_type is None:
+                panel.datasource_type = self.datasource_type
 
         # Adjust ID counter to avoid conflicts with fixed IDs
         while self._id_counter in used_fixed_ids:
