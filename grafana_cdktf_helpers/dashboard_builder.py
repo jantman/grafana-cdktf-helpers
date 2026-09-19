@@ -47,7 +47,10 @@ class Target:
     interval: str = ""
     hide: bool = False
     instant: bool = False
-    datasource_type: str = "prometheus"
+    # None means "unset", so an explicit "prometheus" can be told apart from a
+    # target that simply never said. What gets emitted still falls back to
+    # "prometheus", so the default output is unchanged.
+    datasource_type: Optional[str] = None
     # "heatmap", "table", "time_series"... Omitted from the emitted JSON
     # entirely when None: hundreds of existing targets do not carry the key,
     # and adding it to all of them would churn every dashboard's JSON.
@@ -56,13 +59,12 @@ class Target:
     def resolve_datasource_type(self, panel_type: Optional[str] = None) -> str:
         """Pick the datasource type to emit.
 
-        A target that states its own type keeps it; otherwise it inherits the
-        panel's. This is what lets a plain ``Target`` sit on a Loki panel
-        without having to repeat the type on every query.
+        A target that states its own type keeps it; one that said nothing
+        inherits the panel's. That is what lets a plain ``Target`` sit on a
+        Loki panel without repeating the type on every query, while a target
+        deliberately set to ``"prometheus"`` stays Prometheus even there.
         """
-        if self.datasource_type != "prometheus":
-            return self.datasource_type
-        return panel_type or "prometheus"
+        return self.datasource_type or panel_type or "prometheus"
 
     def to_dict(self, datasource_uid: str,
                 datasource_type: Optional[str] = None) -> Dict[str, Any]:
@@ -419,6 +421,19 @@ class XYChartPanel(Panel):
                 "matcher": {"id": "byName", "options": self.color_field}
             }
 
+        # The panel-wide axisLabel belongs to the y axis. An x axis label has
+        # to be an override on the x field itself -- Grafana has no second
+        # panel-level key for it -- so it is emitted only when asked for,
+        # leaving the overrides list empty in the common case.
+        overrides: List[Dict[str, Any]] = []
+        if self.x_axis_label:
+            overrides.append({
+                "matcher": {"id": "byName", "options": self.x_field},
+                "properties": [
+                    {"id": "custom.axisLabel", "value": self.x_axis_label}
+                ]
+            })
+
         panel_dict["fieldConfig"] = {
             "defaults": {
                 "custom": {
@@ -439,7 +454,7 @@ class XYChartPanel(Panel):
                 },
                 "unit": self.unit
             },
-            "overrides": []
+            "overrides": overrides
         }
         panel_dict["options"] = {
             "mapping": "manual",

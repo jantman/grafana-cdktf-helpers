@@ -557,7 +557,7 @@ class TestTargetDatasourceType:
 
     def test_defaults_to_prometheus(self):
         t = Target(expr="up")
-        assert t.datasource_type == "prometheus"
+        assert t.datasource_type is None   # unset, not "prometheus"
         assert t.format is None
         assert t.to_dict(DS_UID)["datasource"]["type"] == "prometheus"
 
@@ -579,6 +579,18 @@ class TestTargetDatasourceType:
     def test_explicit_target_type_beats_panel_type(self):
         t = Target(expr="up", datasource_type="influxdb")
         assert t.to_dict(DS_UID, "loki")["datasource"]["type"] == "influxdb"
+
+    def test_explicit_prometheus_is_not_overridden_by_panel(self):
+        """"Unset" and "deliberately prometheus" are different things.
+
+        A target that names prometheus keeps it even on a Loki panel; only one
+        that said nothing inherits. This is why the field defaults to None.
+        """
+        t = Target(expr="up", datasource_type="prometheus")
+        assert t.to_dict(DS_UID, "loki")["datasource"]["type"] == "prometheus"
+
+    def test_unset_is_none_not_a_string(self):
+        assert Target(expr="up").datasource_type is None
 
 
 class TestLokiTarget:
@@ -881,6 +893,28 @@ class TestXYChartPanel:
         assert defaults["custom"]["show"] == "points"
         assert defaults["custom"]["pointShape"] == "circle"
         assert defaults["custom"]["axisLabel"] == "Distance"
+
+    def test_x_axis_label_absent_by_default(self):
+        panel = XYChartPanel("Scatter", [LokiTarget(expr='{job="x"}')],
+                             x_field="time", y_field="distance",
+                             datasource_uid=DS_UID)
+        assert panel.to_dict()["fieldConfig"]["overrides"] == []
+
+    def test_x_axis_label_becomes_an_override_on_the_x_field(self):
+        """Grafana has no panel-level x axis label; it is a field override."""
+        panel = XYChartPanel("Scatter", [LokiTarget(expr='{job="x"}')],
+                             x_field="time", y_field="distance",
+                             x_axis_label="Time", datasource_uid=DS_UID)
+        assert panel.to_dict()["fieldConfig"]["overrides"] == [{
+            "matcher": {"id": "byName", "options": "time"},
+            "properties": [{"id": "custom.axisLabel", "value": "Time"}]
+        }]
+
+    def test_show_legend_is_bound(self):
+        panel = XYChartPanel("Scatter", [LokiTarget(expr='{job="x"}')],
+                             x_field="time", y_field="distance",
+                             show_legend=True, datasource_uid=DS_UID)
+        assert panel.to_dict()["options"]["legend"]["showLegend"] is True
 
     def test_legend_hidden_by_default(self):
         panel = XYChartPanel("Scatter", [LokiTarget(expr='{job="x"}')],
