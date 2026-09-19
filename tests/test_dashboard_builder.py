@@ -6,9 +6,13 @@ from grafana_cdktf_helpers.dashboard_builder import (
     ThresholdStep,
     Override,
     Target,
+    LokiTarget,
     FieldConfig,
     Panel,
     TimeseriesPanel,
+    HeatmapPanel,
+    XYChartPanel,
+    LogsPanel,
     Row,
     Dashboard,
     Annotation,
@@ -546,3 +550,402 @@ class TestRadonPanel:
     def test_axis_label(self):
         panel = radon_panel("Radon", ["sensor.r1"], datasource_uid=DS_UID)
         assert panel.field_config.axis_label == "pCi/L"
+
+
+class TestTargetDatasourceType:
+    """The datasource type and query format added in 0.15.0."""
+
+    def test_defaults_to_prometheus(self):
+        t = Target(expr="up")
+        assert t.datasource_type == "prometheus"
+        assert t.format is None
+        assert t.to_dict(DS_UID)["datasource"]["type"] == "prometheus"
+
+    def test_explicit_type_is_emitted(self):
+        t = Target(expr="up", datasource_type="influxdb")
+        assert t.to_dict(DS_UID)["datasource"]["type"] == "influxdb"
+
+    def test_format_absent_when_unset(self):
+        assert "format" not in Target(expr="up").to_dict(DS_UID)
+
+    def test_format_present_when_set(self):
+        t = Target(expr="my_metric_bucket", format="heatmap")
+        assert t.to_dict(DS_UID)["format"] == "heatmap"
+
+    def test_panel_type_is_inherited_when_target_has_no_opinion(self):
+        t = Target(expr="up")
+        assert t.to_dict(DS_UID, "loki")["datasource"]["type"] == "loki"
+
+    def test_explicit_target_type_beats_panel_type(self):
+        t = Target(expr="up", datasource_type="influxdb")
+        assert t.to_dict(DS_UID, "loki")["datasource"]["type"] == "influxdb"
+
+
+class TestLokiTarget:
+
+    def test_defaults(self):
+        t = LokiTarget(expr='{job="x"}')
+        assert t.datasource_type == "loki"
+        assert t.legend_format == ""
+        assert t.query_type == "range"
+        assert t.max_lines is None
+
+    def test_to_dict(self):
+        t = LokiTarget(expr='{job="x"} | json', ref_id="B")
+        d = t.to_dict(DS_UID)
+        assert d["datasource"] == {"type": "loki", "uid": DS_UID}
+        assert d["expr"] == '{job="x"} | json'
+        assert d["legendFormat"] == ""
+        assert d["queryType"] == "range"
+        assert d["refId"] == "B"
+
+    def test_max_lines_absent_when_unset(self):
+        assert "maxLines" not in LokiTarget(expr='{job="x"}').to_dict(DS_UID)
+
+    def test_max_lines_present_when_set(self):
+        t = LokiTarget(expr='{job="x"}', max_lines=500)
+        assert t.to_dict(DS_UID)["maxLines"] == 500
+
+    def test_panel_type_does_not_override_loki(self):
+        t = LokiTarget(expr='{job="x"}')
+        assert t.to_dict(DS_UID, "prometheus")["datasource"]["type"] == "loki"
+
+
+class TestPanelDatasourceType:
+
+    def test_defaults_to_prometheus(self):
+        p = Panel("P", "stat", datasource_uid=DS_UID)
+        assert p.datasource_type is None
+        assert p.to_dict()["datasource"]["type"] == "prometheus"
+
+    def test_explicit_type_is_emitted(self):
+        p = Panel("P", "logs", datasource_uid=DS_UID, datasource_type="loki")
+        assert p.to_dict()["datasource"]["type"] == "loki"
+
+    def test_type_is_passed_down_to_targets(self):
+        p = Panel("P", "logs", datasource_uid=DS_UID, datasource_type="loki")
+        p.targets = [Target(expr='{job="x"}')]
+        assert p.to_dict()["targets"][0]["datasource"]["type"] == "loki"
+
+    def test_target_with_own_type_is_not_overridden_by_panel(self):
+        p = Panel("P", "stat", datasource_uid=DS_UID, datasource_type="loki")
+        p.targets = [Target(expr="up", datasource_type="influxdb")]
+        assert p.to_dict()["targets"][0]["datasource"]["type"] == "influxdb"
+
+
+class TestDashboardDatasourceTypePropagation:
+
+    def test_default_is_prometheus(self):
+        assert Dashboard("D", datasource_uid=DS_UID).datasource_type == "prometheus"
+
+    def test_propagates_to_panel_without_one(self):
+        d = Dashboard("D", datasource_uid=DS_UID, datasource_type="loki")
+        p = Panel("P", "logs")
+        d.panels.append(p)
+        d._assign_ids_and_positions()
+        assert p.datasource_type == "loki"
+
+    def test_does_not_override_panel_with_own_type(self):
+        d = Dashboard("D", datasource_uid=DS_UID, datasource_type="loki")
+        p = Panel("P", "stat", datasource_type="prometheus")
+        d.panels.append(p)
+        d._assign_ids_and_positions()
+        assert p.datasource_type == "prometheus"
+
+    def test_propagates_into_row_panels(self):
+        d = Dashboard("D", datasource_uid=DS_UID, datasource_type="loki")
+        row = d.add_row("Row")
+        p1 = row.add_panel(Panel("P1", "logs"))
+        p2 = row.add_panel(Panel("P2", "stat", datasource_type="prometheus"))
+        d._assign_ids_and_positions()
+        assert p1.datasource_type == "loki"
+        assert p2.datasource_type == "prometheus"
+
+    def test_uid_and_type_are_independent(self):
+        """A Loki panel on a Prometheus dashboard sets both of its own."""
+        d = Dashboard("D", datasource_uid=DS_UID)
+        p = Panel("P", "logs", datasource_uid="loki-uid", datasource_type="loki")
+        d.panels.append(p)
+        d._assign_ids_and_positions()
+        assert p.to_dict()["datasource"] == {"type": "loki", "uid": "loki-uid"}
+
+
+class TestBackwardsCompatibility:
+    """The 0.14.2 output must be reproduced key-for-key.
+
+    23 dashboards in a consuming project are diffed byte-for-byte across this
+    change; these assertions catch a defaults regression long before that does.
+    """
+
+    def test_target_dict_is_unchanged(self):
+        d = Target(expr="up").to_dict(DS_UID)
+        assert d == {
+            "datasource": {"type": "prometheus", "uid": DS_UID},
+            "editorMode": "code",
+            "expr": "up",
+            "instant": False,
+            "legendFormat": "{{friendly_name}}",
+            "range": True,
+            "refId": "A",
+            "hide": False,
+            "interval": "",
+        }
+
+    def test_target_key_order_is_unchanged(self):
+        assert list(Target(expr="up").to_dict(DS_UID).keys()) == [
+            "datasource", "editorMode", "expr", "instant", "legendFormat",
+            "range", "refId", "hide", "interval",
+        ]
+
+    def test_panel_dict_is_unchanged(self):
+        p = Panel("P", "stat", datasource_uid=DS_UID)
+        p.id = 7
+        assert p.to_dict() == {
+            "datasource": {"type": "prometheus", "uid": DS_UID},
+            "description": "",
+            "gridPos": {"h": 8, "w": 12, "x": 0, "y": 0},
+            "id": 7,
+            "title": "P",
+            "type": "stat",
+            "targets": [],
+        }
+
+    def test_panel_key_order_is_unchanged(self):
+        p = Panel("P", "stat", datasource_uid=DS_UID)
+        assert list(p.to_dict().keys()) == [
+            "datasource", "description", "gridPos", "id", "title", "type",
+            "targets",
+        ]
+
+    def test_timeseries_panel_key_order_is_unchanged(self):
+        p = TimeseriesPanel("P", [Target(expr="up")], datasource_uid=DS_UID)
+        assert list(p.to_dict().keys()) == [
+            "datasource", "description", "gridPos", "id", "title", "type",
+            "targets", "fieldConfig", "options",
+        ]
+
+
+class TestPanelTransformations:
+
+    def test_absent_when_unset(self):
+        p = Panel("P", "stat", datasource_uid=DS_UID)
+        assert "transformations" not in p.to_dict()
+
+    def test_absent_when_empty_list(self):
+        """An empty list must omit the key, not emit ``[]``.
+
+        Emitting it would change every existing panel's JSON and make a
+        byte-for-byte upgrade check worthless.
+        """
+        p = Panel("P", "stat", datasource_uid=DS_UID, transformations=[])
+        assert "transformations" not in p.to_dict()
+
+    def test_present_when_non_empty(self):
+        transformations = [
+            {"id": "extractFields", "options": {"source": "labels"}},
+            {"id": "convertFieldType",
+             "options": {"conversions": [{"targetField": "distance",
+                                          "destinationType": "number"}]}},
+        ]
+        p = Panel("P", "xychart", datasource_uid=DS_UID,
+                  transformations=transformations)
+        assert p.to_dict()["transformations"] == transformations
+
+
+class TestHeatmapPanel:
+
+    def test_type_and_targets(self):
+        panel = HeatmapPanel("Heat", [Target(expr="m_bucket", format="heatmap")],
+                             datasource_uid=DS_UID)
+        panel.id = 1
+        d = panel.to_dict()
+        assert d["type"] == "heatmap"
+        assert d["targets"][0]["format"] == "heatmap"
+
+    def test_calculate_is_false(self):
+        """The data arrives already bucketed; Grafana must not re-bucket it."""
+        panel = HeatmapPanel("Heat", [Target(expr="m_bucket")],
+                             datasource_uid=DS_UID)
+        assert panel.to_dict()["options"]["calculate"] is False
+
+    def test_default_options(self):
+        panel = HeatmapPanel("Heat", [Target(expr="m_bucket")],
+                             datasource_uid=DS_UID)
+        opts = panel.to_dict()["options"]
+        assert opts["cellGap"] == 1
+        assert opts["color"] == {
+            "mode": "scheme", "scheme": "Oranges", "fill": "dark-orange",
+            "scale": "exponential", "exponent": 0.5, "steps": 64,
+            "reverse": False,
+        }
+        assert opts["exemplars"] == {"color": "rgba(255,0,255,0.7)"}
+        assert opts["filterValues"] == {"le": 1e-9}
+        assert opts["legend"] == {"show": True}
+        assert opts["rowsFrame"] == {"layout": "auto"}
+        assert opts["showValue"] == "never"
+        assert opts["tooltip"] == {"mode": "single", "yHistogram": False,
+                                   "showColorScale": False}
+        assert opts["yAxis"] == {"axisPlacement": "left", "reverse": False,
+                                 "unit": "short", "axisLabel": ""}
+
+    def test_custom_options(self):
+        panel = HeatmapPanel(
+            "Heat", [Target(expr="m_bucket")], datasource_uid=DS_UID,
+            unit="s", color_scheme="Blues", color_mode="opacity",
+            color_steps=32, cell_gap=2, y_axis_label="Bucket",
+            legend_show=False, tooltip_mode="multi", show_color_scale=True,
+        )
+        opts = panel.to_dict()["options"]
+        assert opts["color"]["scheme"] == "Blues"
+        assert opts["color"]["mode"] == "opacity"
+        assert opts["color"]["steps"] == 32
+        assert opts["cellGap"] == 2
+        assert opts["legend"] == {"show": False}
+        assert opts["tooltip"]["mode"] == "multi"
+        assert opts["tooltip"]["showColorScale"] is True
+        assert opts["yAxis"]["unit"] == "s"
+        assert opts["yAxis"]["axisLabel"] == "Bucket"
+
+    def test_field_config_is_not_timeseries_shaped(self):
+        """A heatmap has none of the time series drawing options."""
+        panel = HeatmapPanel("Heat", [Target(expr="m_bucket")],
+                             datasource_uid=DS_UID)
+        custom = panel.to_dict()["fieldConfig"]["defaults"]["custom"]
+        for key in ("drawStyle", "lineWidth", "fillOpacity", "stacking",
+                    "thresholdsStyle", "pointSize", "showPoints"):
+            assert key not in custom
+        assert custom["scaleDistribution"] == {"type": "linear"}
+        assert panel.to_dict()["fieldConfig"]["overrides"] == []
+
+    def test_auto_ref_ids(self):
+        panel = HeatmapPanel("Heat", [Target(expr="a"), Target(expr="b")],
+                             datasource_uid=DS_UID)
+        assert [t.ref_id for t in panel.targets] == ["A", "B"]
+
+
+class TestXYChartPanel:
+
+    def test_type_and_manual_mapping(self):
+        """Without "manual", Grafana picks fields itself and ignores the
+        matchers below it."""
+        panel = XYChartPanel("Scatter", [LokiTarget(expr='{job="x"}')],
+                             x_field="time", y_field="distance",
+                             datasource_uid=DS_UID)
+        d = panel.to_dict()
+        assert d["type"] == "xychart"
+        assert d["options"]["mapping"] == "manual"
+
+    def test_field_matchers(self):
+        panel = XYChartPanel("Scatter", [LokiTarget(expr='{job="x"}')],
+                             x_field="time", y_field="distance",
+                             datasource_uid=DS_UID)
+        series = panel.to_dict()["options"]["series"]
+        assert len(series) == 1
+        assert series[0]["x"] == {"matcher": {"id": "byName",
+                                              "options": "time"}}
+        assert series[0]["y"] == {"matcher": {"id": "byName",
+                                              "options": "distance"}}
+
+    def test_no_color_matcher_when_color_field_unset(self):
+        panel = XYChartPanel("Scatter", [LokiTarget(expr='{job="x"}')],
+                             x_field="time", y_field="distance",
+                             datasource_uid=DS_UID)
+        assert "color" not in panel.to_dict()["options"]["series"][0]
+
+    def test_color_matcher_when_color_field_set(self):
+        panel = XYChartPanel("Scatter", [LokiTarget(expr='{job="x"}')],
+                             x_field="time", y_field="distance",
+                             color_field="energy", datasource_uid=DS_UID)
+        assert panel.to_dict()["options"]["series"][0]["color"] == {
+            "matcher": {"id": "byName", "options": "energy"}
+        }
+
+    def test_point_size_lives_in_field_config_not_options(self):
+        """Grafana reads pointSize from fieldConfig; in options it is ignored."""
+        panel = XYChartPanel("Scatter", [LokiTarget(expr='{job="x"}')],
+                             x_field="time", y_field="distance",
+                             point_size=9, datasource_uid=DS_UID)
+        d = panel.to_dict()
+        custom = d["fieldConfig"]["defaults"]["custom"]
+        assert custom["pointSize"] == {"fixed": 9}
+        assert "pointSize" not in d["options"]
+        assert "pointSize" not in json.dumps(d["options"])
+
+    def test_field_config_defaults(self):
+        panel = XYChartPanel("Scatter", [LokiTarget(expr='{job="x"}')],
+                             x_field="time", y_field="distance",
+                             unit="km", y_axis_label="Distance",
+                             datasource_uid=DS_UID)
+        defaults = panel.to_dict()["fieldConfig"]["defaults"]
+        assert defaults["unit"] == "km"
+        assert defaults["custom"]["show"] == "points"
+        assert defaults["custom"]["pointShape"] == "circle"
+        assert defaults["custom"]["axisLabel"] == "Distance"
+
+    def test_legend_hidden_by_default(self):
+        panel = XYChartPanel("Scatter", [LokiTarget(expr='{job="x"}')],
+                             x_field="time", y_field="distance",
+                             datasource_uid=DS_UID)
+        assert panel.to_dict()["options"]["legend"]["showLegend"] is False
+
+    def test_transformations_are_carried_through(self):
+        transformations = [{"id": "extractFields",
+                            "options": {"source": "labels"}}]
+        panel = XYChartPanel("Scatter", [LokiTarget(expr='{job="x"}')],
+                             x_field="time", y_field="distance",
+                             datasource_uid=DS_UID,
+                             transformations=transformations)
+        assert panel.to_dict()["transformations"] == transformations
+
+
+class TestLogsPanel:
+
+    def test_type(self):
+        panel = LogsPanel("Logs", [LokiTarget(expr='{job="x"}')],
+                          datasource_uid=DS_UID, datasource_type="loki")
+        d = panel.to_dict()
+        assert d["type"] == "logs"
+        assert d["datasource"]["type"] == "loki"
+
+    def test_default_options(self):
+        panel = LogsPanel("Logs", [LokiTarget(expr='{job="x"}')],
+                          datasource_uid=DS_UID)
+        assert panel.to_dict()["options"] == {
+            "dedupStrategy": "none",
+            "enableLogDetails": True,
+            "prettifyLogMessage": False,
+            "showCommonLabels": False,
+            "showLabels": False,
+            "showLogContextToggle": False,
+            "showTime": True,
+            "sortOrder": "Descending",
+            "wrapLogMessage": True,
+        }
+
+    def test_custom_options(self):
+        panel = LogsPanel("Logs", [LokiTarget(expr='{job="x"}')],
+                          datasource_uid=DS_UID, show_time=False,
+                          wrap_log_message=False, sort_order="Ascending",
+                          enable_log_details=False, show_labels=True)
+        opts = panel.to_dict()["options"]
+        assert opts["showTime"] is False
+        assert opts["wrapLogMessage"] is False
+        assert opts["sortOrder"] == "Ascending"
+        assert opts["enableLogDetails"] is False
+        assert opts["showLabels"] is True
+
+    def test_all_required_options_present(self):
+        """Grafana's schema marks these nine non-optional."""
+        panel = LogsPanel("Logs", [LokiTarget(expr='{job="x"}')],
+                          datasource_uid=DS_UID)
+        for key in ("showLabels", "showCommonLabels", "showTime",
+                    "showLogContextToggle", "wrapLogMessage",
+                    "prettifyLogMessage", "enableLogDetails", "sortOrder",
+                    "dedupStrategy"):
+            assert key in panel.to_dict()["options"]
+
+    def test_field_config_is_minimal(self):
+        panel = LogsPanel("Logs", [LokiTarget(expr='{job="x"}')],
+                          datasource_uid=DS_UID)
+        assert panel.to_dict()["fieldConfig"] == {"defaults": {},
+                                                  "overrides": []}

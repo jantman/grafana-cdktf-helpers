@@ -46,7 +46,13 @@ Source files import from `imports.grafana.*` — these are CDKTF-generated provi
 
 ### Dashboard Builder
 
-`dashboard_builder.py` provides a Pythonic, type-safe way to build Grafana dashboards programmatically using dataclasses instead of raw JSON. Key classes: `Dashboard` (container with `datasource_uid`, configurable `dashboard_id`/`version`/`schema_version`), `TimeseriesPanel`, `Row` (collapsible sections), `Target` (Prometheus queries), `FieldConfig` (visualization settings), `GridPosition`, `ThresholdStep`, `Override`, `Annotation`. Factory functions `temperature_panel()`, `humidity_panel()`, `radon_panel()` create common Home Assistant sensor panels. The `Dashboard` propagates its `datasource_uid` to panels that don't specify one.
+`dashboard_builder.py` provides a Pythonic, type-safe way to build Grafana dashboards programmatically using dataclasses instead of raw JSON. Key classes: `Dashboard` (container with `datasource_uid`/`datasource_type`, configurable `dashboard_id`/`version`/`schema_version`), the panel types `TimeseriesPanel`, `HeatmapPanel`, `XYChartPanel` and `LogsPanel`, `Row` (collapsible sections), `Target` and `LokiTarget` (queries), `FieldConfig` (time series visualization settings), `GridPosition`, `ThresholdStep`, `Override`, `Annotation`. Factory functions `temperature_panel()`, `humidity_panel()`, `radon_panel()` create common Home Assistant sensor panels. The `Dashboard` propagates both its `datasource_uid` and its `datasource_type` to panels that don't specify one, filling only unset values.
+
+Three details are load-bearing and easy to undo by accident:
+
+- **`Target.format` and `Panel.transformations` are omitted from the JSON when unset.** Emitting `"transformations": []` on every panel would change the JSON of every dashboard a consuming project builds, which buries the real diff when someone checks a library upgrade and forces the Terraform provider to re-send every dashboard — the operation that drops panel ids. Same reasoning for `format`.
+- **`HeatmapPanel` sets `calculate: False`.** Its data arrives already bucketed from a histogram; re-bucketing it would be wrong. The value matches Grafana's own default but is stated anyway so it survives a UI round-trip.
+- **`XYChartPanel` sets `mapping: "manual"`, and its point size lives in `fieldConfig`, not `options`.** Under Grafana's `"auto"` default the panel picks fields itself and the explicit x/y matchers are never consulted; a `pointSize` placed in `options` is silently ignored.
 
 ### Dashboard Bundling
 
