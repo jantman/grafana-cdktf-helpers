@@ -3,7 +3,7 @@
 Creates dashboards and alert rules for host-level monitoring:
 systemd services, filesystems, memory, swap, MySQL.
 """
-from typing import TYPE_CHECKING, Optional, Dict, List
+from typing import TYPE_CHECKING, Optional, Dict, List, Tuple
 
 from imports.grafana.folder import Folder
 from imports.grafana.dashboard import Dashboard
@@ -34,6 +34,10 @@ class Hosts:
         host_swap: Optional dict mapping hostname to swap percent threshold.
             Creates per-host swap alerts with custom thresholds and excludes
             those hosts from the default 50% swap alert.
+        host_fs_space: Optional dict mapping hostname to a dict of
+            {mountpoint: free space percent threshold}. Creates a per-mountpoint
+            free space alert with that threshold and excludes exactly that
+            (instance, mountpoint) pair from the default 10% free space alert.
         dashboard_dir: Directory containing dashboard JSON files.
             Defaults to the package's bundled dashboards.
         dashboard_replacements: Optional dict of {placeholder: value}
@@ -48,6 +52,7 @@ class Hosts:
         disable_provenance: bool = True,
         daily_timers: Optional[Dict[str, List[str]]] = None,
         host_swap: Optional[Dict[str, int]] = None,
+        host_fs_space: Optional[Dict[str, Dict[str, int]]] = None,
         dashboard_dir: Optional[str] = None,
         dashboard_replacements: Optional[Dict[str, str]] = None,
     ):
@@ -122,37 +127,67 @@ class Hosts:
         )
 
         # Node/filesystem rules
+        #
+        # A (host, mountpoint) pair in host_fs_space gets its own rule at its
+        # own threshold and is removed from the fleet-wide rule below, so that
+        # exactly one of the two can fire for it.
+        fs_space_overrides: List[Tuple[str, str, int]] = [
+            (hostname, mountpoint, threshold)
+            for hostname, mounts in (host_fs_space or {}).items()
+            for mountpoint, threshold in mounts.items()
+        ]
+
+        def _fs_space_annotations(threshold: int) -> Dict[str, str]:
+            return {
+                "__dashboardUid__": node.uid,
+                "__panelId__": "43",
+                "description": "{{ $values.B.Labels.instance }} device {{ $values.B.Labels.device }} mountpoint {{ $values.B.Labels.mountpoint }} free space is {{ printf \"%.2f\" $values.B.Value }}% which is below threshold of " + f"{threshold}%",
+                "summary": "{{ $values.B.Labels.instance }} {{ $values.B.Labels.mountpoint }} free space is {{ printf \"%.2f\" $values.B.Value }}%",
+            }
+
+        # tmpfs excluded (2026-07): tmpfs is RAM-backed, so its "free
+        # space" is memory pressure (already covered by the RAM/Swap
+        # alerts), not disk. A kiosk's tmpfs /tmp briefly dipping under
+        # the 10% threshold was the sole source of this alert's flapping.
+        #
+        # avail_bytes, not free_bytes (2026-09-16). free_bytes counts
+        # ext4's root-reserved blocks, which nothing but root can
+        # actually use, so on a default 5%-reserve filesystem this
+        # rule read about 5 points higher than the space anyone has.
+        # phoenix /home reported ~10% while 4.2% was genuinely
+        # available. avail_bytes is what df shows and what a process
+        # hitting ENOSPC cares about.
+        #
+        # nas1:9100 excluded, matching the inode rule below: it
+        # exports exactly one non-tmpfs mount, / on /dev/md0, which is
+        # the same storage that `NAS1 Volume Space Used [TF]` already
+        # alerts on from the Synology API. Before this, volume1
+        # crossing 90% raised both at identical timestamps.
+        fs_space_expr = (
+            '(node_filesystem_avail_bytes{fstype!~"nfs4|tmpfs", instance!="nas1:9100"} / '
+            'node_filesystem_size_bytes{fstype!~"nfs4|tmpfs", instance!="nas1:9100"}) * 100'
+        )
+        if fs_space_overrides:
+            # `unless on (instance, mountpoint)`, not an extra label matcher:
+            # an override is one mountpoint on one host, and a matcher set
+            # cannot express "this instance AND this mountpoint" as an
+            # exclusion -- instance!="bigserver:9100" would drop that host's
+            # other filesystems too. The division drops __name__ but keeps the
+            # left operand's labels, so both labels are there to match on.
+            selectors = ' or '.join(
+                f'node_filesystem_avail_bytes{{instance="{hostname}:9100",'
+                f'mountpoint="{mountpoint}"}}'
+                for hostname, mountpoint, _ in fs_space_overrides
+            )
+            fs_space_expr += f' unless on (instance, mountpoint) ({selectors})'
+
         rules = [
             MetricMinThresholdRule(
                 stack,
                 name='Filesystem Free Space [TF]',
-                # tmpfs excluded (2026-07): tmpfs is RAM-backed, so its "free
-                # space" is memory pressure (already covered by the RAM/Swap
-                # alerts), not disk. A kiosk's tmpfs /tmp briefly dipping under
-                # the 10% threshold was the sole source of this alert's flapping.
-                #
-                # avail_bytes, not free_bytes (2026-09-16). free_bytes counts
-                # ext4's root-reserved blocks, which nothing but root can
-                # actually use, so on a default 5%-reserve filesystem this
-                # rule read about 5 points higher than the space anyone has.
-                # phoenix /home reported ~10% while 4.2% was genuinely
-                # available. avail_bytes is what df shows and what a process
-                # hitting ENOSPC cares about.
-                #
-                # nas1:9100 excluded, matching the inode rule below: it
-                # exports exactly one non-tmpfs mount, / on /dev/md0, which is
-                # the same storage that `NAS1 Volume Space Used [TF]` already
-                # alerts on from the Synology API. Before this, volume1
-                # crossing 90% raised both at identical timestamps.
-                expr='(node_filesystem_avail_bytes{fstype!~"nfs4|tmpfs", instance!="nas1:9100"} / '
-                     'node_filesystem_size_bytes{fstype!~"nfs4|tmpfs", instance!="nas1:9100"}) * 100',
+                expr=fs_space_expr,
                 threshold=10, for_='5m', skip_expr_checks=True,
-                annotations={
-                    "__dashboardUid__": node.uid,
-                    "__panelId__": "43",
-                    "description": "{{ $values.B.Labels.instance }} device {{ $values.B.Labels.device }} mountpoint {{ $values.B.Labels.mountpoint }} free space is {{ printf \"%.2f\" $values.B.Value }}% which is below threshold of 10%",
-                    "summary": "{{ $values.B.Labels.instance }} {{ $values.B.Labels.mountpoint }} free space is {{ printf \"%.2f\" $values.B.Value }}%",
-                }
+                annotations=_fs_space_annotations(10),
             ).rule,
             MetricMinThresholdRule(
                 stack,
@@ -168,6 +203,21 @@ class Hosts:
                 }
             ).rule,
         ]
+        for hostname, mountpoint, threshold in fs_space_overrides:
+            rules.append(
+                MetricMinThresholdRule(
+                    stack,
+                    name=f'{hostname} {mountpoint} Filesystem Free Space [TF]',
+                    expr=(
+                        f'(node_filesystem_avail_bytes{{instance="{hostname}:9100",'
+                        f'mountpoint="{mountpoint}"}} / '
+                        f'node_filesystem_size_bytes{{instance="{hostname}:9100",'
+                        f'mountpoint="{mountpoint}"}}) * 100'
+                    ),
+                    threshold=threshold, for_='5m', skip_expr_checks=True,
+                    annotations=_fs_space_annotations(threshold),
+                ).rule
+            )
         for hostname, mem in host_mem.items():
             rules.append(
                 MetricMeanThresholdRule(
