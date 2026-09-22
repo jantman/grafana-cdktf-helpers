@@ -17,6 +17,9 @@ from grafana_cdktf_helpers.utils import load_dashboard, get_shared_dashboard_pat
 if TYPE_CHECKING:
     from grafana_cdktf_helpers.stack import BaseStack
 
+#: Port the systemd_exporter is scraped on; part of the `instance` label.
+SYSTEMD_EXPORTER_PORT = 9558
+
 
 class Hosts:
     """
@@ -38,6 +41,12 @@ class Hosts:
             {mountpoint: free space percent threshold}. Creates a per-mountpoint
             free space alert with that threshold and excludes exactly that
             (instance, mountpoint) pair from the default 10% free space alert.
+        host_unit_failed: Optional dict mapping hostname to a dict of
+            {systemd unit name: for_ duration}. Creates a per-unit failed-unit
+            alert that fires once the unit has been in the failed state for
+            that long, and excludes exactly that (instance, name) pair from the
+            fleet-wide `Failed Systemd Units [TF]` rule. Use it for a unit whose
+            transient failures self-clear and are not worth a notification.
         dashboard_dir: Directory containing dashboard JSON files.
             Defaults to the package's bundled dashboards.
         dashboard_replacements: Optional dict of {placeholder: value}
@@ -53,6 +62,7 @@ class Hosts:
         daily_timers: Optional[Dict[str, List[str]]] = None,
         host_swap: Optional[Dict[str, int]] = None,
         host_fs_space: Optional[Dict[str, Dict[str, int]]] = None,
+        host_unit_failed: Optional[Dict[str, Dict[str, str]]] = None,
         dashboard_dir: Optional[str] = None,
         dashboard_replacements: Optional[Dict[str, str]] = None,
     ):
@@ -97,6 +107,31 @@ class Hosts:
             rg_base['org_id'] = org_id
 
         # Systemd rules
+        #
+        # A (host, unit) pair in host_unit_failed gets its own rule with its
+        # own for_ and is removed from the fleet-wide rule below, so that
+        # exactly one of the two can fire for it.
+        unit_failed_overrides: List[Tuple[str, str, str]] = [
+            (hostname, unit, unit_for)
+            for hostname, units in (host_unit_failed or {}).items()
+            for unit, unit_for in units.items()
+        ]
+
+        failed_units_expr = 'increase(systemd_unit_state{state="failed"}[1m])'
+        if unit_failed_overrides:
+            # `unless on (instance, name)`, not an extra label matcher: an
+            # override is one unit on one host, and a matcher set cannot
+            # express "this instance AND this unit" as an exclusion --
+            # instance!="titan:9558" would drop that host's other units too.
+            # increase() drops __name__ but keeps instance and name, so both
+            # labels are there to match on.
+            selectors = ' or '.join(
+                f'systemd_unit_state{{state="failed",'
+                f'instance="{hostname}:{SYSTEMD_EXPORTER_PORT}",name="{unit}"}}'
+                for hostname, unit, _ in unit_failed_overrides
+            )
+            failed_units_expr += f' unless on (instance, name) ({selectors})'
+
         rules = [
             MetricThresholdRule(
                 stack,
@@ -112,7 +147,7 @@ class Hosts:
             MetricThresholdRule(
                 stack,
                 name="Failed Systemd Units [TF]",
-                expr='increase(systemd_unit_state{state="failed"}[1m])',
+                expr=failed_units_expr,
                 threshold=0, threshold_type='gt', reducer='last', for_='5m',
                 severity='warning',
                 annotations={
@@ -121,6 +156,36 @@ class Hosts:
                 },
             ).rule,
         ]
+        for hostname, unit, unit_for in unit_failed_overrides:
+            rules.append(
+                MetricThresholdRule(
+                    stack,
+                    name=f'{hostname} {unit} Failed [TF]',
+                    # The state itself, not increase() as the fleet-wide rule
+                    # above uses. systemd_unit_state is a 0/1 gauge, so
+                    # increase() over it is non-zero only during the one
+                    # minute following the 0->1 edge; any for_ longer than
+                    # that can never be satisfied and the rule would be a
+                    # silent no-op. A for_ that is meant to read as "has been
+                    # failed this long" has to test the level.
+                    expr=(
+                        f'systemd_unit_state{{state="failed",'
+                        f'instance="{hostname}:{SYSTEMD_EXPORTER_PORT}",'
+                        f'name="{unit}"}}'
+                    ),
+                    threshold=0, threshold_type='gt', reducer='last',
+                    for_=unit_for, severity='warning',
+                    annotations={
+                        "__dashboardUid__": systemd_dash.uid,
+                        "__panelId__": "2",
+                        "description": (
+                            f"{hostname} systemd unit {unit} has been in the"
+                            f" failed state for {unit_for}"
+                        ),
+                        "summary": f"{hostname} {unit} is failed",
+                    },
+                ).rule
+            )
         RuleGroup(
             stack, 'systemd-tf', folder_uid=folder.uid, name='systemd-tf',
             rule=rules, **rg_base
