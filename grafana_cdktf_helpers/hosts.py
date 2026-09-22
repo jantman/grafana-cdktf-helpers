@@ -117,14 +117,23 @@ class Hosts:
             for unit, unit_for in units.items()
         ]
 
-        failed_units_expr = 'increase(systemd_unit_state{state="failed"}[1m])'
+        # The state itself, not increase(...[1m]) as this rule used until
+        # 0.18.0. systemd_unit_state is a 0/1 gauge, so increase() over it is
+        # non-zero only during the minute following the 0->1 edge, and the
+        # condition went false again while the unit was still failed. The 5m
+        # for_ could therefore never be satisfied and the rule never once
+        # reached Alerting: in the 30 days to 2026-09-22 it produced 36 state
+        # transitions at one consuming site, every one of them
+        # Normal -> Pending -> Normal exactly a minute apart, while eight units
+        # across five hosts sat failed for the entire week with nothing said.
+        # A rule that looks completely correct and notifies about nothing is
+        # the worst shape available here, so it tests the level.
+        failed_units_expr = 'systemd_unit_state{state="failed"}'
         if unit_failed_overrides:
             # `unless on (instance, name)`, not an extra label matcher: an
             # override is one unit on one host, and a matcher set cannot
             # express "this instance AND this unit" as an exclusion --
             # instance!="titan:9558" would drop that host's other units too.
-            # increase() drops __name__ but keeps instance and name, so both
-            # labels are there to match on.
             selectors = ' or '.join(
                 f'systemd_unit_state{{state="failed",'
                 f'instance="{hostname}:{SYSTEMD_EXPORTER_PORT}",name="{unit}"}}'
@@ -161,13 +170,10 @@ class Hosts:
                 MetricThresholdRule(
                     stack,
                     name=f'{hostname} {unit} Failed [TF]',
-                    # The state itself, not increase() as the fleet-wide rule
-                    # above uses. systemd_unit_state is a 0/1 gauge, so
-                    # increase() over it is non-zero only during the one
-                    # minute following the 0->1 edge; any for_ longer than
-                    # that can never be satisfied and the rule would be a
-                    # silent no-op. A for_ that is meant to read as "has been
-                    # failed this long" has to test the level.
+                    # Level-based, like the fleet-wide rule above and for the
+                    # same reason -- doubly so here, where the whole point is
+                    # a for_ measured in hours. See the note on
+                    # failed_units_expr.
                     expr=(
                         f'systemd_unit_state{{state="failed",'
                         f'instance="{hostname}:{SYSTEMD_EXPORTER_PORT}",'
