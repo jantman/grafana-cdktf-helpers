@@ -887,9 +887,16 @@ def radon_panel(title: str, entities: List[str],
     targets = []
     ref_ids = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
+    # Home Assistant 2026.8 added a radon device class, and its Prometheus
+    # exporter names a sensor's metric after its device class, so an
+    # integration that adopts it moves from hass_sensor_unit_pci_per_l to
+    # hass_sensor_radon_pci_per_l with no other change. Query both and drop
+    # the name so a sensor stays one continuous series across the rename.
     for i, entity in enumerate(entities):
+        sel = f"{{entity=\"{entity}\"}}"
         targets.append(Target(
-            expr=f"hass_sensor_unit_pci_per_l{{entity=\"{entity}\"}}",
+            expr=(f"max without(__name__) (hass_sensor_radon_pci_per_l{sel}"
+                  f" or hass_sensor_unit_pci_per_l{sel})"),
             ref_id=ref_ids[i]
         ))
 

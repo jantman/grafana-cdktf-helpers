@@ -551,6 +551,15 @@ class TestRadonPanel:
         panel = radon_panel("Radon", ["sensor.r1"], datasource_uid=DS_UID)
         assert panel.field_config.axis_label == "pCi/L"
 
+    def test_queries_both_metric_names(self):
+        """HA 2026.8's radon device class renamed the exporter's metric."""
+        panel = radon_panel("Radon", ["sensor.r1"], datasource_uid=DS_UID)
+        expr = panel.targets[0].expr
+        assert 'hass_sensor_radon_pci_per_l{entity="sensor.r1"}' in expr
+        assert 'hass_sensor_unit_pci_per_l{entity="sensor.r1"}' in expr
+        # One series per sensor across the rename, not one per metric name.
+        assert expr.startswith("max without(__name__) (")
+
 
 class TestTargetDatasourceType:
     """The datasource type and query format added in 0.15.0."""
