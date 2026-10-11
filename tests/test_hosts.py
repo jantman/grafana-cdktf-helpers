@@ -92,3 +92,45 @@ def test_multiple_overrides_across_hosts():
     assert 'instance="phoenix:9558",name="user@1000.service"' in fleet
     overrides = [e for e in exprs if ' unless on ' not in e]
     assert len(overrides) == 2
+
+
+def test_ignore_excludes_the_pair_and_adds_no_rule():
+    """
+    host_unit_ignore removes the (instance, name) pair from the fleet-wide rule
+    and, unlike host_unit_failed, creates no per-unit rule in its place.
+    """
+    exprs = _failed_unit_exprs(_build(host_unit_ignore={
+        'basementtouchpi': ['NetworkManager-wait-online.service'],
+    }))
+    assert exprs == [
+        'systemd_unit_state{state="failed"} unless on (instance, name) '
+        '(systemd_unit_state{state="failed",instance="basementtouchpi:9558",'
+        'name="NetworkManager-wait-online.service"})'
+    ]
+
+
+def test_ignore_and_override_combine_in_one_exclusion():
+    exprs = _failed_unit_exprs(_build(
+        host_unit_failed={'titan': {'route53_ddns.service': '1h'}},
+        host_unit_ignore={'basementtouchpi': ['NetworkManager-wait-online.service']},
+    ))
+    fleet = [e for e in exprs if ' unless on ' in e]
+    assert len(fleet) == 1
+    assert 'instance="titan:9558",name="route53_ddns.service"' in fleet[0]
+    assert (
+        'instance="basementtouchpi:9558",'
+        'name="NetworkManager-wait-online.service"'
+    ) in fleet[0]
+    # Only the override gets a rule of its own.
+    assert [e for e in exprs if ' unless on ' not in e] == [
+        'systemd_unit_state{state="failed",instance="titan:9558",'
+        'name="route53_ddns.service"}'
+    ]
+
+
+def test_pair_in_both_ignore_and_override_is_rejected():
+    with pytest.raises(ValueError, match='titan route53_ddns.service'):
+        _build(
+            host_unit_failed={'titan': {'route53_ddns.service': '1h'}},
+            host_unit_ignore={'titan': ['route53_ddns.service']},
+        )

@@ -47,6 +47,14 @@ class Hosts:
             that long, and excludes exactly that (instance, name) pair from the
             fleet-wide `Failed Systemd Units [TF]` rule. Use it for a unit whose
             transient failures self-clear and are not worth a notification.
+        host_unit_ignore: Optional dict mapping hostname to a list of systemd
+            unit names whose failed state should not alert at all. Each
+            (instance, name) pair is excluded from the fleet-wide
+            `Failed Systemd Units [TF]` rule and gets no rule of its own. Use
+            it only where a delay is no help: a oneshot unit that fails at some
+            boots stays failed until the next reboot, so any for_ in
+            host_unit_failed would still fire eventually. A pair may not be in
+            both this and host_unit_failed.
         dashboard_dir: Directory containing dashboard JSON files.
             Defaults to the package's bundled dashboards.
         dashboard_replacements: Optional dict of {placeholder: value}
@@ -63,6 +71,7 @@ class Hosts:
         host_swap: Optional[Dict[str, int]] = None,
         host_fs_space: Optional[Dict[str, Dict[str, int]]] = None,
         host_unit_failed: Optional[Dict[str, Dict[str, str]]] = None,
+        host_unit_ignore: Optional[Dict[str, List[str]]] = None,
         dashboard_dir: Optional[str] = None,
         dashboard_replacements: Optional[Dict[str, str]] = None,
     ):
@@ -116,6 +125,24 @@ class Hosts:
             for hostname, units in (host_unit_failed or {}).items()
             for unit, unit_for in units.items()
         ]
+        # A (host, unit) pair in host_unit_ignore is removed from the
+        # fleet-wide rule and gets nothing in its place.
+        unit_failed_ignores: List[Tuple[str, str]] = [
+            (hostname, unit)
+            for hostname, units in (host_unit_ignore or {}).items()
+            for unit in units
+        ]
+        both = set(unit_failed_ignores) & {
+            (hostname, unit) for hostname, unit, _ in unit_failed_overrides
+        }
+        if both:
+            raise ValueError(
+                'systemd units in both host_unit_failed and host_unit_ignore: '
+                + ', '.join(f'{h} {u}' for h, u in sorted(both))
+            )
+        excluded_pairs: List[Tuple[str, str]] = [
+            (hostname, unit) for hostname, unit, _ in unit_failed_overrides
+        ] + unit_failed_ignores
 
         # The state itself, not increase(...[1m]) as this rule used until
         # 0.18.0. systemd_unit_state is a 0/1 gauge, so increase() over it is
@@ -129,7 +156,7 @@ class Hosts:
         # A rule that looks completely correct and notifies about nothing is
         # the worst shape available here, so it tests the level.
         failed_units_expr = 'systemd_unit_state{state="failed"}'
-        if unit_failed_overrides:
+        if excluded_pairs:
             # `unless on (instance, name)`, not an extra label matcher: an
             # override is one unit on one host, and a matcher set cannot
             # express "this instance AND this unit" as an exclusion --
@@ -137,7 +164,7 @@ class Hosts:
             selectors = ' or '.join(
                 f'systemd_unit_state{{state="failed",'
                 f'instance="{hostname}:{SYSTEMD_EXPORTER_PORT}",name="{unit}"}}'
-                for hostname, unit, _ in unit_failed_overrides
+                for hostname, unit in excluded_pairs
             )
             failed_units_expr += f' unless on (instance, name) ({selectors})'
 
