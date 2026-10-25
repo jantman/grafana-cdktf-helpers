@@ -27,6 +27,16 @@ class ZoneMinder:
     ``zmes_websocket_aggregation='mean'`` with a longer ``zmes_websocket_from``
     to alert on sustained latency instead of on isolated spikes. Defaults are
     unchanged from before those parameters existed.
+
+    ``monitor_for`` and ``restart_for`` set the pending duration of the
+    per-monitor health rules (connected, signal, active, capture FPS, image
+    size, heartbeat, last read/write) and of the two restart rules (ZMC
+    Uptime, Startup Time). A camera that reboots itself takes a couple of
+    minutes to come back, but the restart rules stay true for ~12 minutes
+    afterwards (uptime < 360s, reduced over a 5-minute range) and the
+    last read/write rules for ~6.5 minutes. Raise these to stop alerting on
+    a single short reboot while still catching a dead camera or a restart
+    loop. Defaults are unchanged from before these parameters existed.
     """
 
     def __init__(
@@ -48,6 +58,8 @@ class ZoneMinder:
         last_write_time_threshold: int = 5,
         systemd_services: Optional[list[str]] = None,
         org_id: Optional[str] = None,
+        monitor_for: str = '1m',
+        restart_for: str = '1m',
     ):
         if ignore_monitor_names is None:
             ignore_monitor_names = []
@@ -114,6 +126,7 @@ class ZoneMinder:
             IsHealthySeriesRule(
                 stack, extra_labels={'dashboard': 'ZM'},
                 name="ZM Monitor Connected",
+                window='1m', for_=monitor_for,
                 metric='zm_monitor_connected' + mon_filter,
                 annotations={
                     "__dashboardUid__": dashboard_uid,
@@ -124,7 +137,7 @@ class ZoneMinder:
             # 6. ZM Monitor Capture FPS
             MetricMeanThresholdRule(
                 stack,
-                name='ZM Monitor Capture FPS',
+                name='ZM Monitor Capture FPS', for_=monitor_for,
                 expr='avg_over_time(zm_monitor_capture_fps' + mon_filter + '[1m])',
                 threshold=capture_fps_threshold,
                 threshold_type='lt', from_=300,
@@ -138,7 +151,7 @@ class ZoneMinder:
             # 7. ZM Monitor ZMC Uptime
             MetricMinThresholdRule(
                 stack,
-                name='ZM Monitor ZMC Uptime',
+                name='ZM Monitor ZMC Uptime', for_=restart_for,
                 expr='min_over_time(zm_monitor_mmap_startup_time_age_seconds' + mon_filter + '[1m])',
                 threshold=360, from_=300,
                 annotations={
@@ -149,7 +162,7 @@ class ZoneMinder:
             # 8. ZM Monitor Startup Time
             MetricMinThresholdRule(
                 stack,
-                name='ZM Monitor Startup Time',
+                name='ZM Monitor Startup Time', for_=restart_for,
                 expr='min_over_time(zm_monitor_zmc_uptime_seconds' + mon_filter + '[1m])',
                 threshold=360, from_=300,
                 annotations={
@@ -160,7 +173,7 @@ class ZoneMinder:
             # 9. ZM Monitor Image Size
             MetricMinThresholdRule(
                 stack,
-                name='ZM Monitor Image Size',
+                name='ZM Monitor Image Size', for_=monitor_for,
                 expr='min_over_time(zm_monitor_mmap_imagesize' + mon_filter + '[1m])',
                 threshold=image_size_threshold, from_=300,
                 annotations={
@@ -172,6 +185,7 @@ class ZoneMinder:
             IsHealthySeriesRule(
                 stack, extra_labels={'dashboard': 'ZM'},
                 name="ZM Monitor Active",
+                window='1m', for_=monitor_for,
                 metric='zm_monitor_mmap_active' + mon_filter,
                 annotations={
                     "summary": "ZM monitor {{ $values.B.Labels.name }} is not active (MMAP)",
@@ -181,6 +195,7 @@ class ZoneMinder:
             IsHealthySeriesRule(
                 stack, extra_labels={'dashboard': 'ZM'},
                 name="ZM Monitor Signal",
+                window='1m', for_=monitor_for,
                 metric='zm_monitor_mmap_signal' + mon_filter,
                 annotations={
                     "summary": "ZM monitor {{ $values.B.Labels.name }} has no signal (MMAP)",
@@ -189,7 +204,7 @@ class ZoneMinder:
             # 12. ZM Monitor Heartbeat Age
             MetricMeanThresholdRule(
                 stack,
-                name='ZM Monitor Heartbeat Age',
+                name='ZM Monitor Heartbeat Age', for_=monitor_for,
                 expr='avg_over_time(zm_monitor_mmap_heartbeat_time_age_seconds' + mon_filter + '[1m])',
                 threshold=heartbeat_age_threshold,
                 threshold_type='gt', from_=300,
@@ -203,7 +218,7 @@ class ZoneMinder:
             # 13. ZM Monitor Last Read Time
             MetricMeanThresholdRule(
                 stack,
-                name='ZM Monitor Last Read Time',
+                name='ZM Monitor Last Read Time', for_=monitor_for,
                 expr='avg_over_time(zm_monitor_mmap_last_read_time_age_seconds' + mon_filter + '[1m])',
                 threshold=last_read_time_threshold,
                 threshold_type='gt', from_=300,
@@ -217,7 +232,7 @@ class ZoneMinder:
             # 14. ZM Monitor Last Write Time
             MetricMeanThresholdRule(
                 stack,
-                name='ZM Monitor Last Write Time',
+                name='ZM Monitor Last Write Time', for_=monitor_for,
                 expr='avg_over_time(zm_monitor_mmap_last_write_time_age_seconds' + mon_filter + '[1m])',
                 threshold=last_write_time_threshold,
                 threshold_type='gt', from_=300,

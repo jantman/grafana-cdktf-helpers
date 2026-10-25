@@ -134,3 +134,35 @@ def test_pair_in_both_ignore_and_override_is_rejected():
             host_unit_failed={'titan': {'route53_ddns.service': '1h'}},
             host_unit_ignore={'titan': ['route53_ddns.service']},
         )
+
+
+def _swap_exprs(exprs):
+    return [e for e in exprs if 'SwapTotal' in e]
+
+
+def test_swap_rule_has_no_paging_filter_by_default():
+    exprs = _swap_exprs(_build())
+    assert len(exprs) == 1
+    assert 'pswpin' not in exprs[0]
+
+
+def test_swap_min_paging_rate_filters_every_swap_rule():
+    exprs = _swap_exprs(_build(
+        host_swap={'titan': 80}, swap_min_paging_rate=100,
+    ))
+    assert len(exprs) == 2
+    for e in exprs:
+        assert e.endswith(
+            ' and on(instance) (rate(node_vmstat_pswpin{job="node"}[10m]) + '
+            'rate(node_vmstat_pswpout{job="node"}[10m])) > 100'
+        )
+
+
+def test_swap_min_paging_rate_reads_no_data_as_ok():
+    arh.RuleGroupRule.reset_mock()
+    _build(swap_min_paging_rate=100)
+    swap = [
+        c.kwargs for c in arh.RuleGroupRule.call_args_list
+        if c.kwargs.get('name') == 'Swap Percent used'
+    ]
+    assert swap[0]['no_data_state'] == 'OK'

@@ -109,3 +109,50 @@ class TestZmesWebsocketAlert:
                 stack, enable_zmes_websocket_alerts=True,
                 zmes_websocket_aggregation='p95',
             )
+
+
+def _rule_kwargs_by_name():
+    return {
+        call.kwargs['name']: call.kwargs
+        for call in alert_rule_helpers.RuleGroupRule.call_args_list
+    }
+
+
+HEALTH_RULES = [
+    'ZM Monitor Connected', 'ZM Monitor Active', 'ZM Monitor Signal',
+    'ZM Monitor Capture FPS', 'ZM Monitor Image Size',
+    'ZM Monitor Heartbeat Age', 'ZM Monitor Last Read Time',
+    'ZM Monitor Last Write Time',
+]
+RESTART_RULES = ['ZM Monitor ZMC Uptime', 'ZM Monitor Startup Time']
+
+
+class TestMonitorPendingDurations:
+
+    def test_defaults_are_one_minute(self, stack):
+        _zm(stack)
+        rules = _rule_kwargs_by_name()
+        for name in HEALTH_RULES + RESTART_RULES:
+            assert rules[name]['for_'] == '1m', name
+
+    def test_monitor_and_restart_for(self, stack):
+        _zm(stack, monitor_for='10m', restart_for='20m')
+        rules = _rule_kwargs_by_name()
+        for name in HEALTH_RULES:
+            assert rules[name]['for_'] == '10m', name
+        for name in RESTART_RULES:
+            assert rules[name]['for_'] == '20m', name
+        # Config-state rules are not reboot-sensitive and keep their default.
+        assert rules['ZM Monitor Enabled']['for_'] == '1m'
+
+    def test_health_series_keep_a_one_minute_window(self, stack):
+        """A longer for_ must not widen the averaging window, or a 2-minute
+        outage would hold the mean below 1 for the whole for_ and fire."""
+        _zm(stack, monitor_for='10m')
+        exprs = [
+            json.loads(c.kwargs['model']).get('expr', '')
+            for c in alert_rule_helpers.RuleGroupRuleData.call_args_list
+        ]
+        assert 'zm_monitor_connected[1m]' in exprs
+        assert 'zm_monitor_mmap_signal[1m]' in exprs
+        assert 'zm_monitor_mmap_active[1m]' in exprs

@@ -504,3 +504,50 @@ class TestOpenPinAlertRule:
             'Mailbox is now shut. Thank you!'
         )
         assert 'Please shut it!' in rule_obj.annotations['description']
+
+
+class TestOpenPinDebounce:
+
+    def test_debounce_wraps_expr_in_min_over_time(self, stack):
+        rule_obj = OpenPinAlertRule(
+            stack=stack, instance='esp32-1', pin_name='latch',
+            title='Rollup Door Latch', debounce='5m',
+        )
+        assert rule_obj.expr == (
+            'min_over_time(gpio_pin_is_on'
+            '{instance="esp32-1",pin_name="latch"}[5m])'
+        )
+        assert rule_obj.for_ == '1h'
+
+
+class TestIsHealthySeriesRuleWindow:
+
+    def test_window_defaults_to_for(self, stack):
+        rule_obj = IsHealthySeriesRule(
+            stack, name='x', metric='up', annotations={}, for_='5m',
+        )
+        assert rule_obj.expr == 'up[5m]'
+
+    def test_window_decoupled_from_for(self, stack):
+        rule_obj = IsHealthySeriesRule(
+            stack, name='x', metric='up', annotations={}, for_='10m',
+            window='1m',
+        )
+        assert rule_obj.expr == 'up[1m]'
+        assert rule_obj.for_ == '10m'
+
+
+class TestBooleanDisappearingSeriesRuleNoData:
+
+    def test_no_data_state_defaults_to_nodata(self, stack):
+        BooleanDisappearingSeriesRule(
+            stack, name='x', metric='bad', annotations={},
+        ).rule
+        assert _rule_kwargs()['no_data_state'] == 'NoData'
+
+    def test_no_data_state_passes_through(self, stack):
+        BooleanDisappearingSeriesRule(
+            stack, name='x', metric='bad', annotations={},
+            no_data_state='OK',
+        ).rule
+        assert _rule_kwargs()['no_data_state'] == 'OK'

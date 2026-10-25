@@ -755,6 +755,7 @@ class BooleanDisappearingSeriesRule(MetricThresholdRule):
         annotations: Dict[str, str], for_: str = '1m',
         severity: str = 'warning', from_: int = 600,
         extra_labels: Optional[Dict[str, str]] = None,
+        no_data_state: str = 'NoData',
         additional_query_expr: Optional[str] = None,
         additional_query_reducer: str = 'last',
         additional_query_threshold: Optional[float] = None,
@@ -772,6 +773,7 @@ class BooleanDisappearingSeriesRule(MetricThresholdRule):
             threshold=threshold, threshold_type=threshold_type,
             annotations=annotations, for_=for_, severity=severity, from_=from_,
             exemplar=False, instant_not_range=True, extra_labels=extra_labels,
+            no_data_state=no_data_state,
             additional_query_expr=additional_query_expr,
             additional_query_reducer=additional_query_reducer,
             additional_query_threshold=additional_query_threshold,
@@ -786,6 +788,11 @@ class IsHealthySeriesRule(MetricThresholdRule):
     """
     A rule that alerts on a multi-series metric, where 1 is "good" and less
     than 1 is "bad".
+
+    The metric is averaged over ``window``, which defaults to ``for_``. Set a
+    ``window`` shorter than ``for_`` so a brief dip stops counting soon after
+    it ends; with the default, a dip shorter than ``for_`` keeps the mean
+    below 1 for the whole ``for_`` duration and still fires.
     """
 
     def __init__(
@@ -801,8 +808,9 @@ class IsHealthySeriesRule(MetricThresholdRule):
         additional_query_from: Optional[int] = None,
         condition_operator: str = 'and',
         informational_queries: Optional[List[InformationalQuery]] = None,
+        window: Optional[str] = None,
     ):
-        expr = metric + '[' + for_ + ']'
+        expr = metric + '[' + (window or for_) + ']'
         reducer = 'mean'
         threshold_type = 'lt'
         super().__init__(
@@ -1078,6 +1086,11 @@ class OpenPinAlertRule(MetricLastThresholdRule):
     closed, 0 means open. The rule fires when the last value is less than 1
     for the configured ``for_`` duration. ``no_data_state`` is ``OK`` so a
     momentarily missing series will not page.
+
+    Set ``debounce`` (e.g. ``'5m'``) to take the minimum of the pin over that
+    window, so a reading that blips to 1 for a sample or two does not reset
+    the ``for_`` timer and send a resolve-then-refire pair. The cost is that
+    the resolve arrives ``debounce`` after the pin really returns to 1.
     """
 
     def __init__(
@@ -1086,6 +1099,7 @@ class OpenPinAlertRule(MetricLastThresholdRule):
         action_verb: str = 'close', for_: str = '1h',
         from_: int = 600, severity: str = 'warning',
         extra_labels: Optional[Dict[str, str]] = None,
+        debounce: Optional[str] = None,
     ):
         labels = {'alert_class': 'door', 'slack_template': 'summary'}
         if extra_labels:
@@ -1098,9 +1112,12 @@ class OpenPinAlertRule(MetricLastThresholdRule):
             ),
             'resolution': f'{title} is now {resolve_verb}. Thank you!',
         }
+        expr = f'gpio_pin_is_on{{instance="{instance}",pin_name="{pin_name}"}}'
+        if debounce:
+            expr = f'min_over_time({expr}[{debounce}])'
         super().__init__(
             stack=stack, name=f'{title} {trigger_verb} [TF]',
-            expr=f'gpio_pin_is_on{{instance="{instance}",pin_name="{pin_name}"}}',
+            expr=expr,
             threshold=1, threshold_type='lt',
             annotations=annotations, for_=for_, from_=from_,
             severity=severity, no_data_state='OK',

@@ -37,6 +37,11 @@ class Hosts:
         host_swap: Optional dict mapping hostname to swap percent threshold.
             Creates per-host swap alerts with custom thresholds and excludes
             those hosts from the default 50% swap alert.
+        swap_min_paging_rate: Optional pages/second. When set, every swap
+            alert also requires the host to be actively paging (swap-in plus
+            swap-out, averaged over 10 minutes, above this rate). A small swap
+            that fills with idle pages and then sits there is not memory
+            pressure; this keeps such a host from alerting forever.
         host_fs_space: Optional dict mapping hostname to a dict of
             {mountpoint: free space percent threshold}. Creates a per-mountpoint
             free space alert with that threshold and excludes exactly that
@@ -69,6 +74,7 @@ class Hosts:
         disable_provenance: bool = True,
         daily_timers: Optional[Dict[str, List[str]]] = None,
         host_swap: Optional[Dict[str, int]] = None,
+        swap_min_paging_rate: Optional[float] = None,
         host_fs_space: Optional[Dict[str, Dict[str, int]]] = None,
         host_unit_failed: Optional[Dict[str, Dict[str, str]]] = None,
         host_unit_ignore: Optional[Dict[str, List[str]]] = None,
@@ -342,6 +348,18 @@ class Hosts:
             "description": "{{ $values.B.Labels.instance }} swap used is {{ printf \"%.2f\" $values.B.Value }}%",
             "summary": "{{ $values.B.Labels.instance }} swap used is {{ printf \"%.2f\" $values.B.Value }}%",
         }
+        # With a paging filter, a host that is not paging drops out of the
+        # result entirely, so no data must read as OK, not as an alert.
+        if swap_min_paging_rate is not None:
+            paging_filter = (
+                ' and on(instance) (rate(node_vmstat_pswpin{job="node"}[10m]) + '
+                'rate(node_vmstat_pswpout{job="node"}[10m])) > '
+                f'{swap_min_paging_rate}'
+            )
+            swap_no_data_state = 'OK'
+        else:
+            paging_filter = ''
+            swap_no_data_state = 'NoData'
         if host_swap:
             exclude = ','.join(f'{h}:9100' for h in host_swap)
             instance_filter = f', instance!~"{exclude}"'
@@ -353,9 +371,10 @@ class Hosts:
                 name='Swap Percent used',
                 expr=f'(node_memory_SwapTotal_bytes{{job="node"{instance_filter}}} - '
                      f'node_memory_SwapFree_bytes{{job="node"{instance_filter}}}) / '
-                     f'node_memory_SwapTotal_bytes{{job="node"{instance_filter}}} * 100',
+                     f'node_memory_SwapTotal_bytes{{job="node"{instance_filter}}} * 100'
+                     f'{paging_filter}',
                 threshold=50, threshold_type='gt', for_='5m',
-                skip_expr_checks=True,
+                skip_expr_checks=True, no_data_state=swap_no_data_state,
                 annotations=swap_annotations,
             ).rule
         )
@@ -367,9 +386,10 @@ class Hosts:
                         name=f'{hostname} Swap Percent used',
                         expr=f'(node_memory_SwapTotal_bytes{{job="node",instance="{hostname}:9100"}} - '
                              f'node_memory_SwapFree_bytes{{job="node",instance="{hostname}:9100"}}) / '
-                             f'node_memory_SwapTotal_bytes{{job="node",instance="{hostname}:9100"}} * 100',
+                             f'node_memory_SwapTotal_bytes{{job="node",instance="{hostname}:9100"}} * 100'
+                             f'{paging_filter}',
                         threshold=threshold, threshold_type='gt', for_='5m',
-                        skip_expr_checks=True,
+                        skip_expr_checks=True, no_data_state=swap_no_data_state,
                         annotations=swap_annotations,
                     ).rule
                 )
