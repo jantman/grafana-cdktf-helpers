@@ -3,8 +3,9 @@ from typing import TYPE_CHECKING, Optional
 
 from imports.grafana.rule_group import RuleGroup
 from grafana_cdktf_helpers.alert_rule_helpers import (
-    MetricMaxThresholdRule, MetricMeanThresholdRule, MetricMinThresholdRule,
-    IsHealthySeriesRule, BooleanDisappearingSeriesRule, SystemdInactiveUnitRule
+    MetricLastThresholdRule, MetricMaxThresholdRule, MetricMeanThresholdRule,
+    MetricMinThresholdRule, IsHealthySeriesRule, BooleanDisappearingSeriesRule,
+    SystemdInactiveUnitRule,
 )
 
 if TYPE_CHECKING:
@@ -37,6 +38,19 @@ class ZoneMinder:
     last read/write rules for ~6.5 minutes. Raise these to stop alerting on
     a single short reboot while still catching a dead camera or a restart
     loop. Defaults are unchanged from before these parameters existed.
+
+    zm-exporter reads each monitor's mmap segment by joining the zm
+    container's IPC namespace. If the zm container is restarted and the
+    exporter is not, the exporter stays attached to the dead namespace and
+    reports frozen mmap values, while the API-derived metrics (connected,
+    capture FPS) stay healthy. ``ZM Exporter mmap View Stale`` fires once per
+    ZM host when any connected monitor reports capture FPS > 0 while its mmap
+    heartbeat is older than ``exporter_stale_heartbeat_threshold`` seconds.
+    While that holds, the Heartbeat Age, Last Read Time and Last Write Time
+    rules for that host read 0 instead of their frozen ages, so one alert
+    replaces one per monitor per rule. A single monitor that is genuinely
+    stuck (capture FPS 0 or disconnected) does not meet the stale condition,
+    so those rules still fire for it.
     """
 
     def __init__(
@@ -60,11 +74,36 @@ class ZoneMinder:
         org_id: Optional[str] = None,
         monitor_for: str = '1m',
         restart_for: str = '1m',
+        exporter_stale_heartbeat_threshold: int = 60,
     ):
         if ignore_monitor_names is None:
             ignore_monitor_names = []
         ignore_mon = '|'.join(ignore_monitor_names) if ignore_monitor_names else ''
         mon_filter = '{name!~"' + ignore_mon + '"}' if ignore_mon else ''
+
+        # Per ZM host: how many connected monitors report capturing (API) while
+        # their mmap heartbeat is stale. The `bool` comparisons keep every
+        # monitor in the result (as 0 or 1), so this is 0, not empty, when
+        # healthy and the rule does not read as NoData. Arithmetic also drops
+        # __name__, so $values.B carries only the instance label.
+        exporter_stale = (
+            'sum by (instance) ('
+            '(zm_monitor_mmap_heartbeat_time_age_seconds' + mon_filter
+            + f' > bool {exporter_stale_heartbeat_threshold})'
+            ' * on(instance, id) (zm_monitor_capture_fps > bool 0)'
+            ' * on(instance, id) (zm_monitor_connected == bool 1)'
+            ')'
+        )
+
+        def gate_on_exporter_stale(expr: str) -> str:
+            # While the exporter's mmap view is stale on a host, read that
+            # host's monitors as 0 instead of dropping them: an empty result
+            # would put the whole rule in NoData. `or` only adds the `* 0`
+            # series for label sets the `unless` removed.
+            return (
+                f'(({expr} unless on(instance) ({exporter_stale} > 0))'
+                f' or ({expr} * 0))'
+            )
 
         if systemd_services is None:
             systemd_services = [
@@ -205,7 +244,9 @@ class ZoneMinder:
             MetricMeanThresholdRule(
                 stack,
                 name='ZM Monitor Heartbeat Age', for_=monitor_for,
-                expr='avg_over_time(zm_monitor_mmap_heartbeat_time_age_seconds' + mon_filter + '[1m])',
+                expr=gate_on_exporter_stale(
+                    'avg_over_time(zm_monitor_mmap_heartbeat_time_age_seconds' + mon_filter + '[1m])'
+                ),
                 threshold=heartbeat_age_threshold,
                 threshold_type='gt', from_=300,
                 annotations={
@@ -219,7 +260,9 @@ class ZoneMinder:
             MetricMeanThresholdRule(
                 stack,
                 name='ZM Monitor Last Read Time', for_=monitor_for,
-                expr='avg_over_time(zm_monitor_mmap_last_read_time_age_seconds' + mon_filter + '[1m])',
+                expr=gate_on_exporter_stale(
+                    'avg_over_time(zm_monitor_mmap_last_read_time_age_seconds' + mon_filter + '[1m])'
+                ),
                 threshold=last_read_time_threshold,
                 threshold_type='gt', from_=300,
                 annotations={
@@ -233,7 +276,9 @@ class ZoneMinder:
             MetricMeanThresholdRule(
                 stack,
                 name='ZM Monitor Last Write Time', for_=monitor_for,
-                expr='avg_over_time(zm_monitor_mmap_last_write_time_age_seconds' + mon_filter + '[1m])',
+                expr=gate_on_exporter_stale(
+                    'avg_over_time(zm_monitor_mmap_last_write_time_age_seconds' + mon_filter + '[1m])'
+                ),
                 threshold=last_write_time_threshold,
                 threshold_type='gt', from_=300,
                 annotations={
@@ -241,6 +286,28 @@ class ZoneMinder:
                     "__panelId__": "41",
                     "summary": "ZM Monitor Last Write Time is high",
                     "description": "ZM Monitor {{ $values.B.Labels.name }} average Last Write Time was {{ printf \"%.2f\" $values.B.Value }} seconds in the last 5 minutes",
+                },
+            ).rule,
+            # 15. ZM Exporter mmap View Stale
+            MetricLastThresholdRule(
+                stack,
+                name='ZM Exporter mmap View Stale', for_=monitor_for,
+                expr=exporter_stale,
+                threshold=0, threshold_type='gt', from_=300,
+                annotations={
+                    "__dashboardUid__": dashboard_uid,
+                    "__panelId__": "39",
+                    "summary": "ZM Exporter mmap view is stale on {{ $values.B.Labels.instance }}",
+                    "description": (
+                        "{{ printf \"%.0f\" $values.B.Value }} ZM monitor(s) on"
+                        " {{ $values.B.Labels.instance }} report capturing"
+                        " but their mmap heartbeat is over"
+                        f" {exporter_stale_heartbeat_threshold} seconds old."
+                        " zm-exporter is likely attached to a stale zm IPC"
+                        " namespace (zm container restarted without it)."
+                        " Restart it on the ZM host:"
+                        " systemctl restart docker-zm-exporter"
+                    ),
                 },
             ).rule,
         ]
