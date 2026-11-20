@@ -81,27 +81,55 @@ class ZoneMinder:
         ignore_mon = '|'.join(ignore_monitor_names) if ignore_monitor_names else ''
         mon_filter = '{name!~"' + ignore_mon + '"}' if ignore_mon else ''
 
-        # Per ZM host: how many connected monitors report capturing (API) while
-        # their mmap heartbeat is stale. The `bool` comparisons keep every
-        # monitor in the result (as 0 or 1), so this is 0, not empty, when
+        # Per ZM host, when zm-exporter's mmap view is stale: the number of
+        # connected, capturing (DB/API) monitors, if every one of them has a
+        # stale mmap heartbeat; otherwise 0. An exporter attached to a dead zm
+        # IPC namespace freezes every monitor's mmap at once, while a single
+        # hung zmc can leave its own DB row saying Connected with FPS > 0, so
+        # one stale monitor out of N is a camera problem, not an exporter one,
+        # and must not close the gate below. The `bool` comparisons keep every
+        # monitor in both sums (as 0 or 1), so this is 0, not empty, when
         # healthy and the rule does not read as NoData. Arithmetic also drops
         # __name__, so $values.B carries only the instance label.
+        hb_metric = 'zm_monitor_mmap_heartbeat_time_age_seconds' + mon_filter
+        capturing = (
+            '(zm_monitor_capture_fps' + mon_filter + ' > bool 0)'
+            ' * on(instance, id) (zm_monitor_connected' + mon_filter
+            + ' == bool 1)'
+        )
+        stale_count = (
+            f'sum by (instance) (({hb_metric}'
+            f' > bool {exporter_stale_heartbeat_threshold})'
+            f' * on(instance, id) {capturing})'
+        )
+        capturing_count = (
+            f'sum by (instance) (clamp({hb_metric}, 1, 1)'
+            f' * on(instance, id) {capturing})'
+        )
         exporter_stale = (
-            'sum by (instance) ('
-            '(zm_monitor_mmap_heartbeat_time_age_seconds' + mon_filter
-            + f' > bool {exporter_stale_heartbeat_threshold})'
-            ' * on(instance, id) (zm_monitor_capture_fps > bool 0)'
-            ' * on(instance, id) (zm_monitor_connected == bool 1)'
-            ')'
+            f'({stale_count} * ({stale_count} == bool {capturing_count}))'
         )
 
+        # How long the gate stays closed after the stale condition clears.
+        # On recovery the per-monitor expressions' avg_over_time([1m]) still
+        # holds frozen ages (~4e5 s after 5 days) for up to 1m, and their
+        # MetricMean reducer averages them over from_=300s. The gate is
+        # applied per point of that range query, so ~90s (the 1m window plus
+        # the 30s subquery step) would strictly suffice; holding for the full
+        # 1m + 300s also covers the reduced value, should the rule ever be
+        # evaluated as an instant mean, at the cost of at most 6 extra minutes
+        # of suppression after a stale period that already lasted hours.
+        stale_hold = '6m'
+
         def gate_on_exporter_stale(expr: str) -> str:
-            # While the exporter's mmap view is stale on a host, read that
-            # host's monitors as 0 instead of dropping them: an empty result
-            # would put the whole rule in NoData. `or` only adds the `* 0`
-            # series for label sets the `unless` removed.
+            # While the exporter's mmap view is stale on a host, and for
+            # stale_hold after it clears, read that host's monitors as 0
+            # instead of dropping them: an empty result would put the whole
+            # rule in NoData. `or` only adds the `* 0` series for label sets
+            # the `unless` removed.
             return (
-                f'(({expr} unless on(instance) ({exporter_stale} > 0))'
+                f'(({expr} unless on(instance)'
+                f' (max_over_time({exporter_stale}[{stale_hold}:30s]) > 0))'
                 f' or ({expr} * 0))'
             )
 
@@ -299,9 +327,9 @@ class ZoneMinder:
                     "__panelId__": "39",
                     "summary": "ZM Exporter mmap view is stale on {{ $values.B.Labels.instance }}",
                     "description": (
-                        "{{ printf \"%.0f\" $values.B.Value }} ZM monitor(s) on"
-                        " {{ $values.B.Labels.instance }} report capturing"
-                        " but their mmap heartbeat is over"
+                        "All {{ printf \"%.0f\" $values.B.Value }} capturing"
+                        " ZM monitor(s) on {{ $values.B.Labels.instance }}"
+                        " have an mmap heartbeat over"
                         f" {exporter_stale_heartbeat_threshold} seconds old."
                         " zm-exporter is likely attached to a stale zm IPC"
                         " namespace (zm container restarted without it)."
