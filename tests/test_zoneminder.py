@@ -156,3 +156,116 @@ class TestMonitorPendingDurations:
         assert 'zm_monitor_connected[1m]' in exprs
         assert 'zm_monitor_mmap_signal[1m]' in exprs
         assert 'zm_monitor_mmap_active[1m]' in exprs
+
+
+STALE_NAME = 'ZM Exporter mmap View Stale'
+MMAP_AGE_METRICS = {
+    'ZM Monitor Heartbeat Age': 'zm_monitor_mmap_heartbeat_time_age_seconds',
+    'ZM Monitor Last Read Time': 'zm_monitor_mmap_last_read_time_age_seconds',
+    'ZM Monitor Last Write Time': 'zm_monitor_mmap_last_write_time_age_seconds',
+}
+
+
+def _query_exprs():
+    return [
+        json.loads(c.kwargs['model']).get('expr', '')
+        for c in alert_rule_helpers.RuleGroupRuleData.call_args_list
+    ]
+
+
+def _stale_expr(threshold=60, mon_filter=''):
+    hb = f'zm_monitor_mmap_heartbeat_time_age_seconds{mon_filter}'
+    capturing = (
+        f'(zm_monitor_capture_fps{mon_filter} > bool 0)'
+        f' * on(instance, id) (zm_monitor_connected{mon_filter} == bool 1)'
+    )
+    stale = (
+        f'sum by (instance) (({hb} > bool {threshold})'
+        f' * on(instance, id) {capturing})'
+    )
+    total = (
+        f'sum by (instance) (clamp({hb}, 1, 1)'
+        f' * on(instance, id) {capturing})'
+    )
+    return f'({stale} * ({stale} == bool {total}))'
+
+
+def _gated(base, stale):
+    return (
+        f'(({base} unless on(instance)'
+        f' (max_over_time({stale}[6m:30s]) > 0))'
+        f' or ({base} * 0))'
+    )
+
+
+class TestExporterMmapViewStale:
+
+    def test_rule_emitted_with_monitor_for(self, stack):
+        _zm(stack, monitor_for='10m')
+        kw = _rule_kwargs_by_name()[STALE_NAME]
+        assert kw['for_'] == '10m'
+        assert kw['labels'] == {'Severity': 'warning'}
+        assert 'systemctl restart docker-zm-exporter' in \
+            kw['annotations']['description']
+        assert 'stale zm IPC namespace' in kw['annotations']['description']
+        assert '$values.B.Labels.instance' in kw['annotations']['summary']
+
+    def test_expr_fires_only_when_every_capturing_monitor_is_stale(
+        self, stack,
+    ):
+        # An exporter fault freezes every monitor's mmap at once; one hung
+        # zmc whose DB row still says Connected/FPS>0 must not count. The
+        # expression is the stale count times (stale count == count of
+        # connected, capturing monitors), so it is 0 (not empty) when healthy
+        # or when only some monitors are stale, and N when all N are.
+        _zm(stack)
+        exprs = _query_exprs()
+        assert _stale_expr() in exprs
+        stale = _stale_expr()
+        assert stale.count('> bool 60') == 2
+        assert stale.count('clamp(') == 1
+        assert ' == bool sum by (instance) (clamp(' in stale
+
+    def test_threshold_and_ignored_monitors(self, stack):
+        _zm(
+            stack, exporter_stale_heartbeat_threshold=120,
+            ignore_monitor_names=['a', 'b'],
+        )
+        stale = _stale_expr(120, '{name!~"a|b"}')
+        assert stale in _query_exprs()
+        # The same filter applies to both sides of the comparison.
+        for metric in (
+            'zm_monitor_mmap_heartbeat_time_age_seconds',
+            'zm_monitor_capture_fps', 'zm_monitor_connected',
+        ):
+            assert f'{metric}{{' in stale
+            assert f'{metric} ' not in stale
+            assert f'{metric})' not in stale
+            assert f'{metric},' not in stale
+
+    def test_mmap_age_rules_are_gated_on_stale_condition(self, stack):
+        # The gate holds for 6m after the stale condition clears, covering
+        # the 1m avg_over_time window plus the 300s mean reducer, so frozen
+        # ages left in those windows cannot fire the rules on recovery.
+        _zm(stack)
+        exprs = _query_exprs()
+        stale = _stale_expr()
+        for name, metric in MMAP_AGE_METRICS.items():
+            base = f'avg_over_time({metric}[1m])'
+            assert _gated(base, stale) in exprs, name
+            # The ungated form must no longer be emitted on its own.
+            assert base not in exprs, name
+
+    def test_gate_uses_ignored_monitor_filter(self, stack):
+        _zm(stack, ignore_monitor_names=['a'])
+        exprs = _query_exprs()
+        stale = _stale_expr(60, '{name!~"a"}')
+        for metric in MMAP_AGE_METRICS.values():
+            base = f'avg_over_time({metric}{{name!~"a"}}[1m])'
+            assert _gated(base, stale) in exprs, metric
+
+    def test_other_monitor_rules_are_not_gated(self, stack):
+        _zm(stack)
+        exprs = _query_exprs()
+        assert 'avg_over_time(zm_monitor_capture_fps[1m])' in exprs
+        assert 'zm_monitor_connected[1m]' in exprs
